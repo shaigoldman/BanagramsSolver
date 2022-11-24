@@ -1,0 +1,21 @@
+Main.hs - Just do IO related stuff and call stuff from src/
+
+Three .hs Files For src/:
+
+    BananaBoard.hs
+        Functions to handle the game board matrix,
+        such as placing a new word at a specific place,
+        determining if a word is valid to be played in a place,
+        returning a list of all available spots to place a new word
+            at horizontally or vertically, etc
+    WordChooser.hs
+        Hueristic scoring for words
+        Dictionary filtering for words that can be built with 
+            letters in hand
+        Picking the best word to play from hand, etc
+    BananaSolve.hs
+        The BFS algorithm that will solve a BananaBoard with a
+        given hand
+
+TODO:
+1. Change the repo format to be stack based instead of cabal based
