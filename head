@@ -1,0 +1,15 @@
+M	BananaSolver.cabal
+M	CHANGELOG.md
+M	LICENSE
+M	README.md
+M	app/Main.hs
+D	dist-newstyle/cache/compiler
+D	dist-newstyle/cache/config
+D	dist-newstyle/cache/elaborated-plan
+D	dist-newstyle/cache/improved-plan
+D	dist-newstyle/cache/plan.json
+D	dist-newstyle/cache/solver-plan
+D	dist-newstyle/cache/source-hashes
+D	dist-newstyle/cache/up-to-date
+D	dist-newstyle/sdist/BananaSolver-0.1.0.0.tar.gz
+Your branch is up to date with 'origin/main'.
