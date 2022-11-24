@@ -2,5 +2,7 @@ module Lib
     ( someFunc
     ) where
 
+import BananaBoard
+
 someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+someFunc = putStrLn $ show next
