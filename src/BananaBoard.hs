@@ -32,20 +32,21 @@ placeWord word (y, x) d m
           placeWordVert (w:ws) p@(py, px) mat = placeWordVert ws (py+1, px) (setElem w p mat)
 
 -- the board has the matrix and a list of words and positions
-data BWord = BWordV String (Int, Int)
-             | BWordH String (Int, Int) 
+data BWord = BWordH String (Int, Int)
+             | BWordV String (Int, Int) 
              deriving (Eq, Show) 
     
 {- The board a list of all horizontal words, all vertical words,
     a virtual origin point used to convert between virtual coordinates
     and "physical" coordinates, and the "physical" matrix.
 -}
-data Board = Board [BWordH] [BWordV] (Int, Int) (Matrix Char) deriving Show
+data Board = Board [BWord] [BWord] (Int, Int) (Matrix Char) deriving Show
 
 singleton :: String -> Board
 singleton word = Board [BWordH word (1,1)] [] (1, 1) (fromLists [word])
 
 joinWordAt :: String -> BWord -> Board -> Maybe Board
+joinWordAt _ _ _ = Nothing
 
 starting :: Matrix Char
 starting = fromLists ["elevator"]
