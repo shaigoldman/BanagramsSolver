@@ -3,6 +3,7 @@ module BananaBoard (
 ) where
 
 import Data.Matrix 
+import Data.Maybe
 
 data Direction = H|V deriving Eq
 
@@ -30,6 +31,30 @@ placeWord word (y, x) d m
           placeWordVert [] _ mat = mat
           placeWordVert (w:ws) p@(py, px) mat = placeWordVert ws (py+1, px) (setElem w p mat)
 
+-- the board has the matrix and a list of words and positions
+data BWord = BWord String (Int, Int) deriving Show
+
+stringOf :: BWord -> String
+stringOf (BWord w _) = w
+
+instance Eq BWord where
+    w == r = stringOf w == stringOf r
+    
+data Board = Board (Matrix Char) [BWord] deriving Show
+
+singleton :: String -> Board
+singleton word = Board (fromLists [word]) [BWord word (1,1)]
+
+getWord :: String -> Board -> Maybe BWord
+getWord [] _ = Nothing
+getWord r m@(Board _ (w:ws)) = Nothing
+
+joinWordWith :: String -> String -> Board -> Maybe Board
+joinWordWith [] _ b = Just b
+joinWordWith _ [] b = Nothing
+joinWordWith (w:ws) (r:rs) b
+    | w == r = Nothing
+    | otherwise = Nothing
 
 starting :: Matrix Char
 starting = fromLists ["elevator"]
