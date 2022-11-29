@@ -5,32 +5,39 @@ module BananaBoard (
 import Data.Matrix 
 import Data.Maybe
 
-data Direction = H|V deriving (Eq, Show) -- horizontal or vertical
-data OMatrix = OMatrix (Int, Int) (Matrix Char) -- matrix with origin 
-instance Show OMatrix where
-    show (OMatrix p m) = show m ++ "\n" ++ show p
 
 empty :: Int -> Int -> Matrix Char
 empty y x = matrix y x (\(_, _) -> ' ')
 
+data OMatrix = OMatrix (Int, Int) (Matrix Char) -- matrix with origin 
+instance Show OMatrix where
+    show (OMatrix p m) = show m ++ "\n" ++ show p
+
+addO :: (Int, Int) -> (Int, Int) -> (Int, Int) -- add origin offset to coords
+addO (y, x) (y0, x0) = (addO1 y y0, addO1 x x0)
+addO1 c c0 = c+c0-1
+
+data Direction = H|V deriving (Eq, Show) -- horizontal or vertical
+
 placeWord :: String -> (Int, Int) -> Direction -> OMatrix -> OMatrix
 placeWord word p@(y, x) d om@(OMatrix og@(y0, x0) m)
-    | d == H = placeWordHrzntl word (y, x) sizedOM
-    | d == V = placeWordVert word (y, x) sizedOM
+    | d == H = placeWordH word (y, x) sizedOM
+    | d == V = placeWordV word (y, x) sizedOM
     
     where 
-          endP = if d == H then (y, x+length word-1) else (y+length word-1, x)
+          endP = if d == H then (y, x+length word-1) 
+                 else (y+length word-1, x)
           sizedOM = resizeTo endP (resizeTo p om)
 
-          placeWordHrzntl :: String -> (Int, Int) -> OMatrix -> OMatrix
-          placeWordHrzntl [] _ m = m
-          placeWordHrzntl (w:ws) p@(y, x) (OMatrix og@(y0, x0) m) =
-             placeWordHrzntl ws (y, x+1) $ OMatrix og $ setElem w (addO p og) m
+          placeWordH :: String -> (Int, Int) -> OMatrix -> OMatrix
+          placeWordH [] _ m = m
+          placeWordH (w:ws) p@(y, x) (OMatrix og m) =
+             placeWordH ws (y, x+1) $ OMatrix og $ setElem w (addO p og) m
 
-          placeWordVert :: String -> (Int, Int) -> OMatrix -> OMatrix
-          placeWordVert [] _ m = m
-          placeWordVert (w:ws) p@(y, x) (OMatrix og@(y0, x0) m) = 
-            placeWordVert ws (y+1, x) $ OMatrix og $ setElem w (addO p og) m
+          placeWordV :: String -> (Int, Int) -> OMatrix -> OMatrix
+          placeWordV [] _ m = m
+          placeWordV (w:ws) p@(y, x) (OMatrix og m) = 
+            placeWordV ws (y+1, x) $ OMatrix og $ setElem w (addO p og) m
 
           resizeTo :: (Int, Int) -> OMatrix -> OMatrix
           resizeTo p om@(OMatrix og@(y0, x0) m) 
@@ -46,28 +53,28 @@ placeWord word p@(y, x) d om@(OMatrix og@(y0, x0) m)
                 $ OMatrix og $ m <|> empty (nrows m) (x-ncols m)
             | otherwise = om
             where (y, x) = addO p og
-          
-          addO :: (Int, Int) -> (Int, Int) -> (Int, Int)
-          addO (y, x) (y0, x0) = (addO1 y y0, addO1 x x0)
-          addO1 c c0 = c+c0-1
-        
-        
 
+isEmptyFor :: (Int, Int) -> OMatrix -> Bool
+isEmptyFor p (OMatrix og m) = ooB || getElem y x m == ' '
+    where (y, x) = addO p og
+          ooB = y < 1 || x < 1 
+                || y <= nrows m || x <= ncols m
+    
 
 -- the board has the matrix and a list of words and positions
 data BWord = BWord String (Int, Int) Direction
              deriving (Eq, Show) 
     
 {- The board a list of all horizontal words, all vertical words,
-    a virtual origin point used to convert between virtual coordinates
-    and "physical" coordinates, and the "physical" matrix.
+   and an OMatrix.
 -}
-data Board = Board [BWord] [BWord] (Int, Int) (Matrix Char) deriving Show
+data Board = Board [BWord] [BWord] OMatrix deriving Show
 
 singleton :: String -> Board
-singleton word = Board [BWord word (1,1) H] [] (1, 1) (fromLists [word])
+singleton word = Board [BWord word (1,1) H] [] 
+                   (OMatrix (1, 1) (fromLists [word]))
 
-joinWordAt :: String -> Char -> BWord -> Board -> Maybe Board
+joinWordAt :: String -> BWord -> Int -> Board -> Maybe Board
 joinWordAt _ _ _ _ = Nothing
 
 starting :: OMatrix 
