@@ -34,10 +34,10 @@ placeWord word p@(y, x) d om@(OMatrix og@(y0, x0) m)
 
           resizeTo :: (Int, Int) -> OMatrix -> OMatrix
           resizeTo p om@(OMatrix og@(y0, x0) m) 
-            | y < 1 = let yoff = 2 + abs y - y0 in
+            | y < 1 = let yoff = 1 + abs y in
                 resizeTo (1, x) $ OMatrix (y0 + yoff, x0) 
                     $ empty yoff (ncols m) <-> m
-            | x < 1 = let xoff = 2 + abs x - x0 in 
+            | x < 1 = let xoff = 1 + abs x in 
                 resizeTo (y, 1) $ OMatrix (y0, x0 + xoff) 
                     $ empty (nrows m) xoff <|> m 
             | y > nrows m = resizeTo p 
@@ -77,7 +77,7 @@ next = placeWord "he" (0, 1) V starting
 
 {-
 word="12345"
-p@(y, x) = (0,1)
+p@(y, x) = (-2,-2)
 d=V
 om@(OMatrix og@(y0, x0) m)=next
 placeWord word p d om
