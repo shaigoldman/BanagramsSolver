@@ -5,43 +5,47 @@ module BananaBoard (
 import Data.Matrix 
 import Data.Maybe
 
-data Direction = H|V deriving Eq
+data Direction = H|V deriving (Eq, Show) -- horizontal or vertical
+data OMatrix = OMatrix (Int, Int) (Matrix Char) -- matrix with origin 
+instance Show OMatrix where
+    show (OMatrix p m) = show m ++ "\n" ++ show p
 
 empty :: Int -> Int -> Matrix Char
 empty y x = matrix y x (\(_, _) -> ' ')
 
-placeWord :: String -> (Int, Int) -> Direction -> (Int, Int) -> Matrix Char 
-    -> ((Int, Int), Matrix Char)
-placeWord word p@(y, x) d og@(y0, x0) m
-    | d == H = (newO, placeWordHrzntl word (y+ny0-1, x+nx0-1) sizedM)
-    | d == V = (newO, placeWordVert word (y+ny0-1, x+nx0-1) sizedM)
+placeWord :: String -> (Int, Int) -> Direction -> OMatrix -> OMatrix
+placeWord word p@(y, x) d om@(OMatrix og@(y0, x0) m)
+    | d == H = placeWordHrzntl word (y, x) sizedOM
+    | d == V = placeWordVert word (y, x) sizedOM
     
     where 
           pp@(pY, pX) = (y+y0-1, x+x0-1)
           endP = if d == H then (pY, pX + length word) else (pY + length word, pX)
-          (newO@(ny0, nx0), sizedM) = resizeTo (resizeTo (og, m) pp) endP
-          placeWordHrzntl :: String -> (Int, Int) -> Matrix Char -> Matrix Char
+          sizedOM = resizeTo endP (resizeTo pp om)
+
+          placeWordHrzntl :: String -> (Int, Int) -> OMatrix -> OMatrix
           placeWordHrzntl [] _ mat = mat
-          placeWordHrzntl (w:ws) q@(qy, qx) mat = placeWordHrzntl ws (qy, qx+1) (setElem w q mat)
+          placeWordHrzntl (w:ws) (y, x) (OMatrix og@(y0, x0) mat) =
+             placeWordHrzntl ws (y, x+1) $ OMatrix og $ setElem w (y+y0-1, x+x0-1) mat
 
-          placeWordVert :: String -> (Int, Int) -> Matrix Char -> Matrix Char
+          placeWordVert :: String -> (Int, Int) -> OMatrix -> OMatrix
           placeWordVert [] _ mat = mat
-          placeWordVert (w:ws) q@(qy, qx) mat = placeWordVert ws (qy+1, qx) (setElem w q mat)
+          placeWordVert (w:ws) (qy, qx) (OMatrix og@(y0, x0) mat) = 
+            placeWordVert ws (qy+1, qx) $ OMatrix og $ setElem w (qy+y0-1, qx+x0-1) mat
 
-          resizeTo :: ((Int, Int), Matrix Char) -> (Int, Int) -> ((Int, Int), Matrix Char)
-          resizeTo (og@(y0, x0), m) p@(y, x) 
+          resizeTo :: (Int, Int) -> OMatrix -> OMatrix
+          resizeTo p@(y, x) om@(OMatrix og@(y0, x0) m) 
             | y < 1 = let yoff = 1 + abs y in
-                resizeTo ((y0 + yoff, x0), empty yoff (ncols m) <-> m) (1, x)
+                resizeTo (1, x) $ OMatrix (y0 + yoff, x0) $ empty yoff (ncols m) <-> m
             | x < 1 = let xoff = 1 + abs x in 
-                resizeTo ((y0, x0 + xoff), empty (nrows m) xoff <|> m) (y, 1)
-            | y > nrows m = resizeTo (og, m <-> empty (y - nrows m) (ncols m)) p
-            | x > ncols m = resizeTo  (og, m <|> empty (nrows m) (x - ncols m)) p
-            | otherwise = (og, m)
+                resizeTo (y, 1) $ OMatrix (y0, x0 + xoff) $ empty (nrows m) xoff <|> m 
+            | y > nrows m = resizeTo p $ OMatrix og $ m <-> empty (y - nrows m) (ncols m)
+            | x > ncols m = resizeTo p $ OMatrix og $ m <|> empty (nrows m) (x - ncols m)
+            | otherwise = om
 
 
 -- the board has the matrix and a list of words and positions
-data BWord = BWordH String (Int, Int)
-             | BWordV String (Int, Int) 
+data BWord = BWord String (Int, Int) Direction
              deriving (Eq, Show) 
     
 {- The board a list of all horizontal words, all vertical words,
@@ -51,12 +55,12 @@ data BWord = BWordH String (Int, Int)
 data Board = Board [BWord] [BWord] (Int, Int) (Matrix Char) deriving Show
 
 singleton :: String -> Board
-singleton word = Board [BWordH word (1,1)] [] (1, 1) (fromLists [word])
+singleton word = Board [BWord word (1,1) H] [] (1, 1) (fromLists [word])
 
 joinWordAt :: String -> Char -> BWord -> Board -> Maybe Board
 joinWordAt _ _ _ _ = Nothing
 
-starting :: Matrix Char
-starting = fromLists ["elevator"]
+starting :: OMatrix 
+starting = OMatrix (1,1) $ fromLists ["elevator"]
 
-(origin, next) = placeWord "he" (0, 1) V (1,1) starting
+next = placeWord "he" (0, 1) V starting
