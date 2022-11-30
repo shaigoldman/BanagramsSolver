@@ -5,4 +5,4 @@ module Lib
 import BananaBoard
 
 someFunc :: IO ()
-someFunc = putStrLn $ show next
+someFunc = print b3
