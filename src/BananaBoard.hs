@@ -5,9 +5,11 @@ module BananaBoard (
 import Data.Matrix 
 import Data.Maybe
 
+blank :: Char
+blank = ':'
 
 empty :: Int -> Int -> Matrix Char
-empty y x = matrix y x (\(_, _) -> ' ')
+empty y x = matrix y x (\(_, _) -> blank)
 
 data OMatrix = OMatrix (Int, Int) (Matrix Char) -- matrix with origin 
 instance Show OMatrix where
@@ -43,7 +45,7 @@ placeWord word p@(y, x) d om@(OMatrix og@(y0, x0) m)
             placeWordV ws (y+1, x) $ OMatrix og $ setElem w (addO p og) m
 
           resizeTo :: (Int, Int) -> OMatrix -> OMatrix
-          resizeTo p@(_x, _y) om@(OMatrix og@(y0, x0) m) 
+          resizeTo p@(_y, _x) om@(OMatrix og@(y0, x0) m) 
             | y < 1 = let yoff = 1 + abs y in
                 resizeTo (1, _x) $ OMatrix (y0 + yoff, x0) 
                     $ empty yoff (ncols m) <-> m
@@ -58,7 +60,7 @@ placeWord word p@(y, x) d om@(OMatrix og@(y0, x0) m)
             where (y, x) = addO p og
 
 isEmptyFor :: (Int, Int) -> OMatrix -> Bool
-isEmptyFor p (OMatrix og m) = ooB || getElem y x m == ' '
+isEmptyFor p (OMatrix og m) = ooB || getElem y x m == blank
     where (y, x) = addO p og
           ooB = y < 1 || x < 1 
                 || y <= nrows m || x <= ncols m
@@ -91,9 +93,10 @@ joinWordAt sw swi (BWord _ (y, x) d) bwi (Board hws vws om)
                       else (y - swi, x + bwi) 
         om_new = placeWord sw p (flipD d) om
 
-b1@(Board (bw:_) _ _) = singleton "elevator"
-b2@(Board _ (new_bw:_) _) = joinWordAt "callback" 2 bw 1 b1
-b3 = joinWordAt "soccer" 3 new_bw 6 b2
+b1@(Board (bw1:_) _ _) = singleton "elevator"
+b2@(Board _ (bw2:_) _) = joinWordAt "callback" 2 bw1 1 b1
+b3 = joinWordAt "soccer" 3 bw2 6 b2
+b4 = joinWordAt "rabbit" 5 bw1 5 b3
 
 {-
 word="12345"
