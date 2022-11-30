@@ -43,12 +43,12 @@ placeWord word p@(y, x) d om@(OMatrix og@(y0, x0) m)
             placeWordV ws (y+1, x) $ OMatrix og $ setElem w (addO p og) m
 
           resizeTo :: (Int, Int) -> OMatrix -> OMatrix
-          resizeTo p om@(OMatrix og@(y0, x0) m) 
+          resizeTo p@(_x, _y) om@(OMatrix og@(y0, x0) m) 
             | y < 1 = let yoff = 1 + abs y in
-                resizeTo (1, x) $ OMatrix (y0 + yoff, x0) 
+                resizeTo (1, _x) $ OMatrix (y0 + yoff, x0) 
                     $ empty yoff (ncols m) <-> m
             | x < 1 = let xoff = 1 + abs x in 
-                resizeTo (y, 1) $ OMatrix (y0, x0 + xoff) 
+                resizeTo (_y, 1) $ OMatrix (y0, x0 + xoff) 
                     $ empty (nrows m) xoff <|> m 
             | y > nrows m = resizeTo p 
                 $ OMatrix og $ m <-> empty (y - nrows m) (ncols m)
