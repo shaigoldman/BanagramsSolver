@@ -91,11 +91,6 @@ joinWordAt sw swi (BWord _ (y, x) d) bwi (Board hws vws om)
                       else (y - swi, x + bwi) 
         om_new = placeWord sw p (flipD d) om
 
-starting :: OMatrix 
-starting = OMatrix (1,1) $ fromLists ["elevator"]
-
-next = placeWord "he" (0, 1) V starting
-
 b1@(Board (bw:_) _ _) = singleton "elevator"
 b2@(Board _ (new_bw:_) _) = joinWordAt "callback" 2 bw 1 b1
 b3 = joinWordAt "soccer" 3 new_bw 6 b2
