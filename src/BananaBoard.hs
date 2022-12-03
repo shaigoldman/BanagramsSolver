@@ -95,8 +95,10 @@ joinWordAt sw swi (BWord _ (y, x) d) bwi (Board hws vws om)
 
 b1@(Board (bw1:_) _ _) = singleton "elevator"
 b2@(Board _ (bw2:_) _) = joinWordAt "callback" 2 bw1 1 b1
-b3 = joinWordAt "soccer" 3 bw2 6 b2
-b4 = joinWordAt "rabbit" 5 bw1 5 b3
+b3@(Board (bw3:_) _ _) = joinWordAt "soccer" 3 bw2 6 b2
+b4@(Board _ (bw4:_) _) = joinWordAt "rabbit" 5 bw1 5 b3
+b5 = joinWordAt "rocket" 0 bw4 0 b4
+b6 = joinWordAt "chocolates" 9 bw3 0 b5
 
 {-
 word="12345"
