@@ -1,5 +1,7 @@
 module BananaBoard (
-    b3
+    b3,
+    Board,
+    singleton
 ) where
 
 import Data.Matrix 
