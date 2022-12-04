@@ -3,6 +3,9 @@ module Lib
     ) where
 
 import BananaBoard
+import WordChooser
 
 someFunc :: IO ()
-someFunc = print b3
+someFunc = do
+    print b3
+    print b

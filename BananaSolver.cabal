@@ -27,6 +27,7 @@ library
   exposed-modules:
       BananaBoard
       Lib
+      WordChooser
   other-modules:
       Paths_BananaSolver
   hs-source-dirs:
@@ -35,6 +36,7 @@ library
   build-depends:
       base >=4.7 && <5
     , matrix >=0.3.6.1
+    , unordered-containers >=0.2.19.1
   default-language: Haskell2010
 
 executable BananaSolver-exe
@@ -48,6 +50,7 @@ executable BananaSolver-exe
       BananaSolver
     , base >=4.7 && <5
     , matrix >=0.3.6.1
+    , unordered-containers >=0.2.19.1
   default-language: Haskell2010
 
 test-suite BananaSolver-test
@@ -62,4 +65,5 @@ test-suite BananaSolver-test
       BananaSolver
     , base >=4.7 && <5
     , matrix >=0.3.6.1
+    , unordered-containers >=0.2.19.1
   default-language: Haskell2010

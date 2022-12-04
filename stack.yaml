@@ -38,6 +38,9 @@ packages:
 
 extra-deps:
 - matrix-0.3.6.1
+- TernaryTrees-0.2.0.2
+- charset-0.3.9
+- unordered-containers-0.2.19.1
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
