@@ -56,7 +56,7 @@ bestWord buildables = Just $ maximumBy scoreCmp buildables
 
 
 playFirstWord :: Hand -> [[String]] -> Maybe (Hand, Board)
-playFirstWord hand [] = Nothing
+playFirstWord _ [] = Nothing
 playFirstWord hand (d:ds)
     | isNothing best = playFirstWord hand ds
     | otherwise = let (word, newhand) = fromJust best in
