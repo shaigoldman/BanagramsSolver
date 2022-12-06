@@ -7,4 +7,5 @@ import WordChooser
 
 someFunc :: IO ()
 someFunc = do
-    print b3
+    print b6
+    main

@@ -1,5 +1,5 @@
 module WordChooser (
-    
+    main
 ) where
 
 {-# LANGUAGE BlockArguments #-}
@@ -7,16 +7,9 @@ module WordChooser (
 import Data.List (group, sort, groupBy, sortBy, elemIndex, maximumBy)
 import Data.Maybe (fromJust, isNothing, mapMaybe)
 import Data.HashMap.Strict (HashMap, fromList, member, update)
-import Control.Monad (unless)
 import BananaBoard
 
 type Hand = HashMap Char Int
-
-playTile :: Char -> Hand -> Hand
-playTile = update dec
-    where dec :: Int -> Maybe Int
-          dec 1 = Nothing
-          dec n = Just (n-1)
 
 splitDict :: [String] -> [[String]]
 splitDict dict = groupBy lengthEq $ sortBy lengthCmp dict
@@ -27,11 +20,18 @@ toHand :: String -> Hand
 toHand hand = fromList $ map (\s -> (head s, length s)) 
     $ (group . sort) hand
 
+playTile :: Char -> Hand -> Hand
+playTile = update dec
+    where dec :: Int -> Maybe Int
+          dec 1 = Nothing
+          dec n = Just (n-1)
+
 buildWord :: String -> Hand -> Maybe Hand
 buildWord [] hand = Just hand
 buildWord (w:ws) hand
     | null hand || not (member w hand) = Nothing
     | otherwise = buildWord ws $ playTile w hand  
+
 
 buildWords :: [String] -> Hand -> [(String, Hand)]
 buildWords dict hand = mapMaybe bw_pair dict
@@ -67,7 +67,7 @@ playFirstWord hand (d:ds)
 
 main :: IO ()
 main = do
-    fcontents <- readFile "../words.txt"
+    fcontents <- readFile "words.txt"
     let dict = splitDict $ words fcontents
     let hand = toHand "riggyalarcwgbit"
     print $ playFirstWord hand dict

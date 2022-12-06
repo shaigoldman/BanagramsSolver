@@ -1,5 +1,5 @@
 module BananaBoard (
-    b3,
+    b6,
     Board,
     singleton
 ) where
