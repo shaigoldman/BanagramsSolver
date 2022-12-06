@@ -39,7 +39,7 @@ buildWords dict hand = mapMaybe bw_pair dict
           bw word = buildWord word hand
           bw_pair word = case bw word of
             Nothing -> Nothing
-            Just hand -> Just (word, hand)
+            Just _hand -> Just (word, _hand)
 
 bestWord :: [(String, Hand)] -> Maybe (String, Hand)
 bestWord [] = Nothing
