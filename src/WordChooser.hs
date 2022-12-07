@@ -99,4 +99,8 @@ main = do
     print state1
     print $ do
         state@(_, Board (bw1:_) _ _) <- state1
-        playBestWordAt bw1 2 dict state
+        state2@(_, Board _ (bw2:_) _) <- playBestWordAt bw1 2 dict state
+        state3 <- playBestWordAt bw2 4 dict state2
+        state4 <- playBestWordAt bw1 7 dict state3
+        playBestWordAt bw2 6 dict state4
+
