@@ -1,9 +1,10 @@
 module BananaBoard (
     b6,
-    Board (Board),
-    singleton,
-    BWord (BWord),
-    joinWordAt
+    Board (..),
+    BWord (..),
+    Direction (..),
+    joinWordAt,
+    singleton
 ) where
 
 import Data.Matrix

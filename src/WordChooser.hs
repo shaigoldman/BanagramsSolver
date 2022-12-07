@@ -5,7 +5,7 @@ module WordChooser (
 import Data.List (group, sort, groupBy, sortBy, elemIndex, maximumBy)
 import Data.Maybe (fromJust, isNothing, mapMaybe)
 import Data.HashMap.Strict (HashMap, fromList, member, update, alter)
-import BananaBoard ( singleton, BWord(..), Board(..), joinWordAt )
+import BananaBoard
 
 type Hand = HashMap Char Int
 
@@ -90,12 +90,18 @@ playBestWordAt bword@(BWord word _ _) i (d:ds) s@(hand, board)
             return (w, h, fromJust (elemIndex c w))
 
 
+getOpenTiles :: Board -> Direction -> [(BWord, Int)]
+getOpenTiles (Board hWords vWords _) d | d == H =    [(word, i) | word@(BWord s _ _) <- hWords, i <- [0..length s - 1]]
+                                       | otherwise = [(word, i) | word@(BWord s _ _) <- vWords, i <- [0..length s - 1]]
+
 main :: IO ()
 main = do
     fcontents <- readFile "words.txt"
     let dict = splitDict $ words fcontents
     let hand = toHand "riggyasdffddgdfsaaaeeeii"
     let state1 = playFirstWord hand dict
+    let (_ , board) = fromJust state1
+    print $ getOpenTiles board H
     print state1
     print $ do
         state@(_, Board (bw1:_) _ _) <- state1
@@ -103,4 +109,3 @@ main = do
         state3 <- playBestWordAt bw2 4 dict state2
         state4 <- playBestWordAt bw1 7 dict state3
         playBestWordAt bw2 6 dict state4
-
