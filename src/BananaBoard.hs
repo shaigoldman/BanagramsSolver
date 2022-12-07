@@ -3,20 +3,23 @@ module BananaBoard (
     Board (Board),
     singleton,
     BWord (BWord),
-    joinWordAt
+    joinWordAt,
+    bmain
 ) where
 
+import Data.Set (Set, fromList, member)
 import Data.Matrix
-    ( (<->), (<|>), fromLists, getElem, matrix, setElem, Matrix(..) ) 
+    ( (<->), (<|>), fromLists, getElem, matrix, 
+      setElem, Matrix(..), toLists, transpose ) 
 
 blank :: Char
-blank = ':'
+blank = ' '
 
 empty :: Int -> Int -> Matrix Char
 empty y x = matrix y x (\(_, _) -> blank)
 
-
-data OMatrix = OMatrix (Int, Int) (Matrix Char) -- matrix with origin 
+type CharMatrix = Matrix Char
+data OMatrix = OMatrix (Int, Int) CharMatrix -- matrix with origin 
 instance Show OMatrix where
     show (OMatrix p m) = show m ++ "\n" ++ show p
 
@@ -100,18 +103,41 @@ joinWordAt sw swi (BWord _ (y, x) d) bwi (Board hws vws om)
         om_new = placeWord sw p (flipD d) om
 
 
+type StringSet = Set String
+
+isValid :: StringSet -> CharMatrix -> Bool
+isValid dict m = areValidRows dict (toLists m)
+    && areValidRows dict (toLists $ transpose m)
+
+    where 
+        isValidRow :: StringSet -> String -> Bool
+        isValidRow dict row = all (`member` dict) $
+            filter (\w -> length w /= 1) (words row)
+
+        areValidRows :: StringSet -> [String] -> Bool
+        areValidRows dict = all (isValidRow dict)
+
+
 b1 :: Board
 b1@(Board (bw1:_) _ _) = singleton "elevator"
 b2 :: Board
-b2@(Board _ (bw2:_) _) = joinWordAt "callback" 2 bw1 1 b1
+b2@(Board _ (bw2:_) _) = joinWordAt "camelback" 4 bw1 1 b1
 b3 :: Board
-b3@(Board (bw3:_) _ _) = joinWordAt "soccer" 3 bw2 6 b2
+b3@(Board (bw3:_) _ _) = joinWordAt "soccer" 3 bw2 7 b2
 b4 :: Board
 b4@(Board _ (bw4:_) _) = joinWordAt "rabbit" 5 bw1 5 b3
 b5 :: Board
 b5 = joinWordAt "rocket" 0 bw4 0 b4
 b6 :: Board
-b6 = joinWordAt "chocolates" 9 bw3 0 b5
+b6@(Board _ _ (OMatrix _ m)) = joinWordAt "contest" 5 bw3 0 b5
+
+bmain :: IO ()
+bmain = do
+    fcontents <- readFile "words.txt"
+    let dict = fromList $ words fcontents
+    if isValid dict m then
+        print "b6 is a valid board"
+    else print "b6 is invalid"
 
 {-
 word="12345"

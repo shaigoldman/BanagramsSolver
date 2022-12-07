@@ -8,4 +8,5 @@ import WordChooser
 someFunc :: IO ()
 someFunc = do
     print b6
+    bmain
     main
