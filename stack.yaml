@@ -17,8 +17,8 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver:
-  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/20/1.yaml
+resolver: ghc-9.0.2
+#  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/20/1.yaml
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -38,7 +38,17 @@ packages:
 
 extra-deps:
 - matrix-0.3.6.1
+- containers-0.6.6
 - unordered-containers-0.2.19.1
+- hashable-1.4.1.0
+- loop-0.3.0
+- primitive-0.7.4.0
+- semigroups-0.20
+- vector-0.13.0.0
+- base-orphans-0.8.7
+- vector-stream-0.1.0.0
+- text-2.0.1
+- binary-0.8.9.1
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
@@ -58,7 +68,8 @@ extra-deps:
 # arch: x86_64
 #
 # Extra directories used by stack for building
-# extra-include-dirs: [/path/to/dir]
+extra-include-dirs: 
+- /Library/Developer/CommandLineTools/SDKs/MacOSX12.sdk/usr/include/ffi
 # extra-lib-dirs: [/path/to/dir]
 #
 # Allow a newer minor version of GHC than the snapshot specifies

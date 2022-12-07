@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - matrix >= 0.3.6.1
 - unordered-containers >= 0.2.19.1
+- containers >= 0.6.6
 
 ghc-options:
 - -Wall
