@@ -1,6 +1,8 @@
 module BananaBoard (
     b6,
-    Board,
+    Board (..),
+    BWord (..),
+    Direction (..),
     singleton
 ) where
 
