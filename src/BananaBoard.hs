@@ -1,10 +1,10 @@
 module BananaBoard (
     b6,
-    Board (Board),
-    singleton,
-    BWord (BWord),
+    Board (..),
+    BWord (..),
+    Direction (..),
     joinWordAt,
-    bmain
+    singleton
 ) where
 
 import Data.Set (Set, fromList, member)
