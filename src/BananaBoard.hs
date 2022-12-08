@@ -3,6 +3,7 @@ module BananaBoard (
     Board (..),
     BWord (..),
     Direction (..),
+    flipD,
     joinWordAt,
     singleton,
     isValidBoard,
