@@ -94,9 +94,9 @@ playBestWordAt dictset bword@(BWord word _ _) i (d:ds) s@(hand, board, dir)
         best = joinBestWord bests
 
 getOpenTiles :: Board -> Direction -> [(BWord, Int)]
-getOpenTiles (Board hWords vWords _) d
-    | d == H =    [(word, i) | word@(BWord s _ _) <- hWords, i <- [0..length s - 1]]
-    | otherwise = [(word, i) | word@(BWord s _ _) <- vWords, i <- [0..length s - 1]]
+getOpenTiles (Board hWords vWords _) d = [(word, i) | word@(BWord s _ _) <- hWords ++ vWords, i <- [0..length s - 1]]
+    -- | d == H =    [(word, i) | word@(BWord s _ _) <- hWords, i <- [0..length s - 1]]
+    -- | otherwise = [(word, i) | word@(BWord s _ _) <- vWords, i <- [0..length s - 1]]
 
 -- Given a state and, finds all open tiles and the best word to play at each open tile. 
 playTurn :: Maybe State -> [[String]] -> StringSet -> Maybe [Maybe State]
@@ -118,7 +118,9 @@ main = do
     print state1
     print $ do
         state@(_, Board (bw1:_) _ _, _) <- state1
-        playTurn (Just state) dict dictset 
+        states <- playTurn (Just state) dict dictset
+        states2 <- playTurn (states !! 0) dict dictset 
+        playTurn (states2 !! 0) dict dictset 
         -- state2 <- playBestWordAt dictset bw1 0 dict state
         -- state3 <- playBestWordAt dictset bw1 1 dict state2
         -- state4 <- playBestWordAt dictset bw1 2 dict state3
