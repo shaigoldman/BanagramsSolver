@@ -60,14 +60,14 @@ bestWords = sortBy scoreCmp
         freqOrd = "esiarntolcdugpmhbyfvkwzxjq"
 
 
-type State = (Hand, Board, Direction)
+type State = (Hand, Board)
 
 playFirstWord :: Hand -> [[String]] -> Maybe State
 playFirstWord _ [] = Nothing
 playFirstWord hand (d:ds)
     | null bests = playFirstWord hand ds
     | otherwise = let (word, newhand) = head bests in
-        Just (newhand, singleton word, H)
+        Just (newhand, singleton word)
     where
           bests = bestWords $ buildWords hand d
 
@@ -77,7 +77,7 @@ wordsWithChar c = filter (elem c)
 
 playBestWordAt :: StringSet -> BWord -> Int -> [[String]] -> State -> Maybe State
 playBestWordAt _ _ _ [] _ = Nothing
-playBestWordAt dictset bword@(BWord word _ _) i (d:ds) s@(hand, board, dir)
+playBestWordAt dictset bword@(BWord word _ _) i (d:ds) s@(hand, board)
     | isNothing best = playBestWordAt dictset bword i ds s
     | otherwise = best
     where
@@ -87,23 +87,21 @@ playBestWordAt dictset bword@(BWord word _ _) i (d:ds) s@(hand, board, dir)
         joinBestWord :: [(String, Hand)] -> Maybe State
         joinBestWord [] = Nothing
         joinBestWord ((w, h): xs)
-            | isValidBoard dictset newboard = Just (h, newboard, flipD dir)
+            | isValidBoard dictset newboard = Just (h, newboard)
             | otherwise = joinBestWord xs
             where newboard = joinWordAt w (fromJust (elemIndex c w)) bword i board
         
         best = joinBestWord bests
 
-getOpenTiles :: Board -> Direction -> [(BWord, Int)]
-getOpenTiles (Board hWords vWords _) d = [(word, i) | word@(BWord s _ _) <- hWords ++ vWords, i <- [0..length s - 1]]
-    -- | d == H =    [(word, i) | word@(BWord s _ _) <- hWords, i <- [0..length s - 1]]
-    -- | otherwise = [(word, i) | word@(BWord s _ _) <- vWords, i <- [0..length s - 1]]
+getOpenTiles :: Board -> [(BWord, Int)]
+getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
 
 -- Given a state and, finds all open tiles and the best word to play at each open tile. 
 playTurn :: Maybe State -> [[String]] -> StringSet -> Maybe [Maybe State]
 playTurn Nothing _ _= Nothing
-playTurn (Just state@(_, board, d)) dictlist dictset = 
+playTurn (Just state@(_, board)) dictlist dictset = 
     Just (map playWordAtTile openTiles)
-        where openTiles = getOpenTiles board d
+        where openTiles = getOpenTiles board
               playWordAtTile (bword, i) = playBestWordAt dictset bword i dictlist state
 
 
@@ -117,15 +115,14 @@ main = do
     let state1 = playFirstWord hand dict
     print state1
     print $ do
-        state@(_, Board (bw1:_) _ _, _) <- state1
-        states <- playTurn (Just state) dict dictset
-        states2 <- playTurn (states !! 0) dict dictset 
-        playTurn (states2 !! 0) dict dictset 
-        -- state2 <- playBestWordAt dictset bw1 0 dict state
-        -- state3 <- playBestWordAt dictset bw1 1 dict state2
-        -- state4 <- playBestWordAt dictset bw1 2 dict state3
-        -- state5 <- playBestWordAt dictset bw1 3 dict state4
-        -- state6 <- playBestWordAt dictset bw1 4 dict state5
-        -- state7 <- playBestWordAt dictset bw1 5 dict state6
-        -- state8 <- playBestWordAt dictset bw1 6 dict state7
-        -- playBestWordAt dictset bw1 7 dict state8
+        state@(_, Board (bword1:_) _) <- state1
+        states <- playTurn (Just state) dict dictset 
+        playTurn (states !! 0) dict dictset 
+        -- state2 <- playBestWordAt dictset bword1 0 dict state
+        -- state3 <- playBestWordAt dictset bword1 1 dict state2
+        -- state4 <- playBestWordAt dictset bword1 2 dict state3
+        -- state5 <- playBestWordAt dictset bword1 3 dict state4
+        -- state6 <- playBestWordAt dictset bword1 4 dict state5
+        -- state7 <- playBestWordAt dictset bword1 5 dict state6
+        -- state8 <- playBestWordAt dictset bword1 6 dict state7
+        -- playBestWordAt dictset bword1 7 dict state8
