@@ -42,8 +42,8 @@ buildWord (w:ws) hand
 buildWords :: Hand -> [String] -> [(String, Hand)]
 buildWords hand = mapMaybe bw_pair
     where
-          bw word = buildWord word hand
-          bw_pair word = case bw word of
+        bw_pair [_] = Nothing
+        bw_pair word = case buildWord word hand of
             Nothing -> Nothing
             Just _hand -> Just (word, _hand)
 
@@ -113,8 +113,4 @@ main = do
         state2 <- playBestWordAt dictset bw1 0 dict state
         state3 <- playBestWordAt dictset bw1 1 dict state2
         state4 <- playBestWordAt dictset bw1 2 dict state3
-        state5 <- playBestWordAt dictset bw1 3 dict state4
-        state6 <- playBestWordAt dictset bw1 4 dict state5
-        state7 <- playBestWordAt dictset bw1 5 dict state6
-        state8 <- playBestWordAt dictset bw1 6 dict state7
-        playBestWordAt dictset bw1 7 dict state8
+        playBestWordAt dictset bw1 3 dict state4
