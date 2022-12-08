@@ -4,7 +4,10 @@ module BananaBoard (
     BWord (..),
     Direction (..),
     joinWordAt,
-    singleton
+    singleton,
+    isValidBoard,
+    StringSet,
+    bmain
 ) where
 
 import Data.Set (Set, fromList, member)
@@ -116,6 +119,9 @@ isValid dict m = areValidRows dict (toLists m)
 
         areValidRows :: StringSet -> [String] -> Bool
         areValidRows dict = all (isValidRow dict)
+
+isValidBoard :: StringSet -> Board -> Bool
+isValidBoard dict (Board _ _ (OMatrix _ m)) = isValid dict m
 
 
 b1 :: Board

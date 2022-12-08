@@ -2,9 +2,10 @@ module WordChooser (
     main
 ) where
 
-import Data.List (group, sort, groupBy, sortBy, elemIndex, maximumBy)
+import Data.List (group, sort, groupBy, sortBy, elemIndex, maximumBy, null)
 import Data.Maybe (fromJust, isNothing, mapMaybe)
 import Data.HashMap.Strict (HashMap, fromList, member, update, alter)
+import Data.Set (fromList)
 import BananaBoard
 
 type Hand = HashMap Char Int
@@ -15,7 +16,7 @@ splitDict dict = groupBy lengthEq $ sortBy lengthCmp dict
           lengthEq x y = length x == length y
 
 toHand :: String -> Hand
-toHand hand = fromList $ map (\s -> (head s, length s))
+toHand hand = Data.HashMap.Strict.fromList $ map (\s -> (head s, length s))
     $ (group . sort) hand
 
 playTile :: Char -> Hand -> Hand
@@ -46,9 +47,8 @@ buildWords hand = mapMaybe bw_pair
             Nothing -> Nothing
             Just _hand -> Just (word, _hand)
 
-bestWord :: [(String, Hand)] -> Maybe (String, Hand)
-bestWord [] = Nothing
-bestWord buildables = Just $ maximumBy scoreCmp buildables
+bestWords :: [(String, Hand)] -> [(String, Hand)]
+bestWords = sortBy scoreCmp
     where
         scoreCmp (x, _) (y, _) = scoreWord x `compare` scoreWord y
         scoreWord :: String -> Int
@@ -65,46 +65,56 @@ type State = (Hand, Board)
 playFirstWord :: Hand -> [[String]] -> Maybe State
 playFirstWord _ [] = Nothing
 playFirstWord hand (d:ds)
-    | isNothing best = playFirstWord hand ds
-    | otherwise = let (word, newhand) = fromJust best in
+    | null bests = playFirstWord hand ds
+    | otherwise = let (word, newhand) = head bests in
         Just (newhand, singleton word)
     where
-          best = bestWord $ buildWords hand d
+          bests = bestWords $ buildWords hand d
 
 
 wordsWithChar :: Char -> [String] -> [String]
 wordsWithChar c = filter (elem c)
 
-playBestWordAt :: BWord -> Int -> [[String]] -> State -> Maybe State
-playBestWordAt _ _ [] _ = Nothing
-playBestWordAt bword@(BWord word _ _) i (d:ds) s@(hand, board)
-    | isNothing res = playBestWordAt bword i ds s
-    | otherwise = let (bestword, newhand, bindex) = fromJust res
-                      newboard = joinWordAt bestword bindex bword i board
-                  in Just (newhand, newboard)
+playBestWordAt :: StringSet -> BWord -> Int -> [[String]] -> State -> Maybe State
+playBestWordAt _ _ _ [] _ = Nothing
+playBestWordAt dictset bword@(BWord word _ _) i (d:ds) s@(hand, board)
+    | isNothing best = playBestWordAt dictset bword i ds s
+    | otherwise = best
     where
         c = word !! i
-        best = bestWord $ buildWords (addTile c hand) $ wordsWithChar c d
-        res = do
-            (w, h) <- best
-            return (w, h, fromJust (elemIndex c w))
+        bests = bestWords $ buildWords (addTile c hand) $ wordsWithChar c d
 
+        joinBestWord :: [(String, Hand)] -> Maybe State
+        joinBestWord [] = Nothing
+        joinBestWord ((w, h): xs)
+            | isValidBoard dictset newboard = Just (h, newboard)
+            | otherwise = joinBestWord xs
+            where newboard = joinWordAt w (fromJust (elemIndex c w)) bword i board
+        
+        best = joinBestWord bests
 
 getOpenTiles :: Board -> Direction -> [(BWord, Int)]
 getOpenTiles (Board hWords vWords _) d
     | d == H =    [(word, i) | word@(BWord s _ _) <- hWords, i <- [0..length s - 1]]
     | otherwise = [(word, i) | word@(BWord s _ _) <- vWords, i <- [0..length s - 1]]
 
+
 main :: IO ()
 main = do
     fcontents <- readFile "words.txt"
-    let dict = splitDict $ words fcontents
+    let ws = words fcontents
+    let dict = splitDict ws
+    let dictset = Data.Set.fromList ws
     let hand = toHand "riggyasdffddgdfsaaaeeeii"
     let state1 = playFirstWord hand dict
     print state1
     print $ do
         state@(_, Board (bw1:_) _ _) <- state1
-        state2@(_, Board _ (bw2:_) _) <- playBestWordAt bw1 2 dict state
-        state3 <- playBestWordAt bw2 4 dict state2
-        state4 <- playBestWordAt bw1 7 dict state3
-        playBestWordAt bw2 6 dict state4
+        state2 <- playBestWordAt dictset bw1 0 dict state
+        state3 <- playBestWordAt dictset bw1 1 dict state2
+        state4 <- playBestWordAt dictset bw1 2 dict state3
+        state5 <- playBestWordAt dictset bw1 3 dict state4
+        state6 <- playBestWordAt dictset bw1 4 dict state5
+        state7 <- playBestWordAt dictset bw1 5 dict state6
+        state8 <- playBestWordAt dictset bw1 6 dict state7
+        playBestWordAt dictset bw1 7 dict state8
