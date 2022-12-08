@@ -91,8 +91,9 @@ playBestWordAt bword@(BWord word _ _) i (d:ds) s@(hand, board)
 
 
 getOpenTiles :: Board -> Direction -> [(BWord, Int)]
-getOpenTiles (Board hWords vWords _) d | d == H =    [(word, i) | word@(BWord s _ _) <- hWords, i <- [0..length s - 1]]
-                                       | otherwise = [(word, i) | word@(BWord s _ _) <- vWords, i <- [0..length s - 1]]
+getOpenTiles (Board hWords vWords _) d
+    | d == H =    [(word, i) | word@(BWord s _ _) <- hWords, i <- [0..length s - 1]]
+    | otherwise = [(word, i) | word@(BWord s _ _) <- vWords, i <- [0..length s - 1]]
 
 main :: IO ()
 main = do
