@@ -11,10 +11,10 @@ module WordChooser (
 import Data.List (group, sort, groupBy, sortBy, elemIndex)
 import Data.Maybe (fromJust, mapMaybe)
 import Data.HashMap.Strict (fromList, member, update, alter)
-import Types (Hand)
+import Types (Hand, StringLists)
 
 
-splitDict :: [String] -> [[String]]
+splitDict :: [String] -> StringLists
 splitDict dict = groupBy lengthEq $ sortBy lengthCmp dict
     where lengthCmp x y = length y `compare` length x
           lengthEq x y = length x == length y

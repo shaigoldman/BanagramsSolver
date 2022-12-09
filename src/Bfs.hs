@@ -19,11 +19,12 @@ import WordChooser
       wordsWithChar)
 import Types (
     StringSet,
+    StringLists,
     Board (..),
     BWord (..),
     State)
 
-playFirstTurn :: Hand -> [[String]] -> [State]
+playFirstTurn :: Hand -> StringLists -> [State]
 playFirstTurn _ [] = []
 playFirstTurn hand (d:ds)
     | null bests = playFirstTurn hand ds
@@ -32,7 +33,7 @@ playFirstTurn hand (d:ds)
     where
           bests = bestWords $ buildWords hand d
 
-playBestWordAt :: StringSet -> [[String]] -> State -> (BWord, Int) -> Maybe State
+playBestWordAt :: StringSet -> StringLists -> State -> (BWord, Int) -> Maybe State
 playBestWordAt _ [] _ _ = Nothing
 playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
     | isNothing best = playBestWordAt dictset ds s (bword, i) 
@@ -53,8 +54,8 @@ playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
 getOpenTiles :: Board -> [(BWord, Int)]
 getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
 
--- Given a state and, finds all open tiles and the best word to play at each open tile. 
-playTurn :: State -> StringSet -> [[String]] -> [State]
+-- Given a state finds all open tiles and the best word to play at each open tile. 
+playTurn :: State -> StringSet -> StringLists -> [State]
 playTurn state@(_, board) dictset dictlist = 
     mapMaybe (playBestWordAt dictset dictlist state) openTiles
         where openTiles = getOpenTiles board

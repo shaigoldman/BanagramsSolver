@@ -1,5 +1,6 @@
 module Types (
     StringSet,
+    StringLists,
     CharMatrix,
     Hand,
     Direction (H, V),
@@ -15,6 +16,7 @@ import Data.HashMap.Strict (HashMap)
 import Data.Matrix (Matrix)
 
 type StringSet = Set String
+type StringLists = [[String]]
 type CharMatrix = Matrix Char
 type Hand = HashMap Char Int
 
