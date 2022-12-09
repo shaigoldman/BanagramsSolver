@@ -56,30 +56,22 @@ getOpenTiles :: Board -> [(BWord, Int)]
 getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
 
 -- Given a state and, finds all open tiles and the best word to play at each open tile. 
-playTurn :: State -> [[String]] -> StringSet -> [State]
-playTurn state@(_, board) dictlist dictset = 
+playTurn :: State -> StringSet -> [[String]] -> [State]
+playTurn state@(_, board) dictset dictlist = 
     mapMaybe (playBestWordAt dictset dictlist state) openTiles
         where openTiles = getOpenTiles board
-
+        
 
 main :: IO ()
 main = do
     fcontents <- readFile "words.txt"
     let ws = words fcontents
-    let dict = splitDict ws
+    let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
     let hand = toHand "riggyasdffddgdfsaaaeeeii"
-    let state1 = playFirstTurn hand dict
+    let state1 = playFirstTurn hand dictlist
     print state1
     print $ do
         state <- state1
-        state2 <- playTurn state dict dictset 
-        playTurn state2 dict dictset 
-        -- state2 <- playBestWordAt dictset bword1 0 dict state
-        -- state3 <- playBestWordAt dictset bword1 1 dict state2
-        -- state4 <- playBestWordAt dictset bword1 2 dict state3
-        -- state5 <- playBestWordAt dictset bword1 3 dict state4
-        -- state6 <- playBestWordAt dictset bword1 4 dict state5
-        -- state7 <- playBestWordAt dictset bword1 5 dict state6
-        -- state8 <- playBestWordAt dictset bword1 6 dict state7
-        -- playBestWordAt dictset bword1 7 dict state8
+        state2 <- playTurn state dictset dictlist
+        playTurn state2 dictset dictlist
