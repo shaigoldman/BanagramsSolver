@@ -23,7 +23,6 @@ import Types (
     Board (..),
     BWord (..),
     State)
-import Control.Monad (when)
 
 playFirstTurn :: Hand -> StringLists -> [State]
 playFirstTurn _ [] = []
@@ -75,7 +74,13 @@ main = do
     let ws = words fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    let hand = toHand "riggyasdffddgdfsaaaeeeii"
+    let tiles = "aaaaddddeeefffgggiiirssy"
+    putStrLn $ "Tiles: " ++ tiles
+    let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
-    print state1
-    print $ head $ bfsLoop dictset dictlist state1
+    let res = bfsLoop dictset dictlist state1
+    case res of
+        [] -> putStrLn "no solution"
+        (s:_) -> do
+            putStrLn "solved!\n" 
+            print s
