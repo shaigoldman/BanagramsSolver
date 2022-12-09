@@ -28,6 +28,7 @@ library
       BananaBoard
       Bfs
       Lib
+      Types
       WordChooser
   other-modules:
       Paths_BananaSolver

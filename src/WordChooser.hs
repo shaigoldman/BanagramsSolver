@@ -9,9 +9,9 @@ module WordChooser (
 
 import Data.List (group, sort, groupBy, sortBy, elemIndex)
 import Data.Maybe (fromJust, mapMaybe)
-import Data.HashMap.Strict (HashMap, fromList, member, update, alter)
+import Data.HashMap.Strict (fromList, member, update, alter)
+import Types (Hand)
 
-type Hand = HashMap Char Int
 
 splitDict :: [String] -> [[String]]
 splitDict dict = groupBy lengthEq $ sortBy lengthCmp dict

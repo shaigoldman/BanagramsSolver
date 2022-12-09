@@ -1,17 +1,16 @@
 module BananaBoard (
-    b6,
-    Board (..),
-    BWord (..),
-    Direction (..),
-    flipD,
     joinWordAt,
     singleton,
     isValidBoard,
-    StringSet,
-    bmain
 ) where
-
-import Data.Set (Set, fromList, member)
+import Types (
+    Direction (..), 
+    flipD,
+    OMatrix (..), 
+    BWord (..), 
+    Board (..),
+    StringSet)
+import Data.Set (member)
 import Data.Matrix
     ( (<->), (<|>), fromLists, getElem, matrix, 
       setElem, Matrix(..), toLists, transpose ) 
@@ -22,20 +21,11 @@ blank = ' '
 empty :: Int -> Int -> Matrix Char
 empty y x = matrix y x (\(_, _) -> blank)
 
-type CharMatrix = Matrix Char
-data OMatrix = OMatrix (Int, Int) CharMatrix -- matrix with origin 
-instance Show OMatrix where
-    show (OMatrix p m) = show m ++ "\n" ++ show p
-
-addO :: (Int, Int) -> (Int, Int) -> (Int, Int) -- add origin offset to coords
+-- add origin offset to coords
+addO :: (Int, Int) -> (Int, Int) -> (Int, Int) 
 addO (y, x) (y0, x0) = (addO1 y y0, addO1 x x0)
 addO1 :: Num a => a -> a -> a
 addO1 c c0 = c+c0-1
-
-data Direction = H|V deriving (Eq, Show) -- horizontal or vertical
-flipD :: Direction -> Direction
-flipD H = V
-flipD V = H
 
 placeWord :: String -> (Int, Int) -> Direction -> OMatrix -> OMatrix
 placeWord word p@(y, x) d om
@@ -79,19 +69,6 @@ isEmptyFor p (OMatrix og m) = ooB || getElem y x m == blank
                 || y <= nrows m || x <= ncols m
     
 
--- the board has the matrix and a list of words and positions
-data BWord = BWord String (Int, Int) Direction
-             deriving (Eq, Show) 
-    
-{- The board a list of all horizontal words, all vertical words,
-   and an OMatrix.
--}
-data Board = Board [BWord] OMatrix
-instance Show Board where
-    show (Board bwords om) = 
-         "bwords: " ++ show bwords ++ "\n" 
-          ++ show om
-
 singleton :: String -> Board
 singleton word = Board [BWord word (1,1) H] (OMatrix (1, 1) (fromLists [word]))
 
@@ -105,10 +82,9 @@ joinWordAt sw swi (BWord _ (y, x) d) bwi (Board bwords om)
         om_new = placeWord sw p new_d om
 
 
-type StringSet = Set String
-
-isValid :: StringSet -> CharMatrix -> Bool
-isValid dict m = areValidRows dict (toLists m)
+isValidBoard :: StringSet -> Board -> Bool
+isValidBoard dict (Board _ (OMatrix _ m)) = 
+    areValidRows dict (toLists m)
     && areValidRows dict (toLists $ transpose m)
 
     where 
@@ -118,36 +94,3 @@ isValid dict m = areValidRows dict (toLists m)
 
         areValidRows :: StringSet -> [String] -> Bool
         areValidRows dict = all (isValidRow dict)
-
-isValidBoard :: StringSet -> Board -> Bool
-isValidBoard dict (Board _ (OMatrix _ m)) = isValid dict m
-
-
-b1 :: Board
-b1@(Board (bw1:_) _) = singleton "elevator"
-b2 :: Board
-b2@(Board (bw2:_) _) = joinWordAt "camelback" 4 bw1 1 b1
-b3 :: Board
-b3@(Board (bw3:_) _) = joinWordAt "soccer" 3 bw2 7 b2
-b4 :: Board
-b4@(Board (bw4:_) _) = joinWordAt "rabbit" 5 bw1 5 b3
-b5 :: Board
-b5 = joinWordAt "rocket" 0 bw4 0 b4
-b6 :: Board
-b6@(Board _ (OMatrix _ mat)) = joinWordAt "contest" 5 bw3 0 b5
-
-bmain :: IO ()
-bmain = do
-    fcontents <- readFile "words.txt"
-    let dict = fromList $ words fcontents
-    if isValid dict mat then
-        print "b6 is a valid board"
-    else print "b6 is invalid"
-
-{-
-word="12345"
-p@(y, x) = (-2,-2)
-d=V
-om@(OMatrix og@(y0, x0) m)=next
-placeWord word p d om
--}

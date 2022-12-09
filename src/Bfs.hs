@@ -8,9 +8,6 @@ import Data.List ( elemIndex )
 import BananaBoard
     ( joinWordAt,
       singleton,
-      Board(..),
-      BWord(..),
-      StringSet,
       isValidBoard )
 import WordChooser
     ( Hand, 
@@ -19,8 +16,11 @@ import WordChooser
       buildWords, 
       bestWords, 
       addTile )
-
-type State = (Hand, Board)
+import Types (
+    StringSet,
+    Board (..),
+    BWord (..),
+    State)
 
 wordsWithChar :: Char -> [String] -> [String]
 wordsWithChar c = filter (elem c)
