@@ -3,6 +3,7 @@ module BananaBoard (
     Board (..),
     BWord (..),
     Direction (..),
+    flipD,
     joinWordAt,
     singleton,
     isValidBoard,
@@ -85,21 +86,18 @@ data BWord = BWord String (Int, Int) Direction
 {- The board a list of all horizontal words, all vertical words,
    and an OMatrix.
 -}
-data Board = Board [BWord] [BWord] OMatrix
+data Board = Board [BWord] OMatrix
 instance Show Board where
-    show (Board hws vws om) = 
-         "hws: " ++ show hws ++ "\n" 
-          ++ "vws: " ++ show vws ++ "\n"
+    show (Board bwords om) = 
+         "bwords: " ++ show bwords ++ "\n" 
           ++ show om
 
 singleton :: String -> Board
-singleton word = Board [BWord word (1,1) H] [] 
-                   (OMatrix (1, 1) (fromLists [word]))
+singleton word = Board [BWord word (1,1) H] (OMatrix (1, 1) (fromLists [word]))
 
 joinWordAt :: String -> Int -> BWord -> Int -> Board -> Board
-joinWordAt sw swi (BWord _ (y, x) d) bwi (Board hws vws om)
-    | d == H = Board hws (BWord sw p V:vws) om_new
-    | otherwise = Board (BWord sw p H:hws) vws om_new
+joinWordAt sw swi (BWord _ (y, x) d) bwi (Board bwords om)
+    = Board (BWord sw p d:bwords) om_new
     where 
         p = if d == V then (y + bwi, x - swi) 
                       else (y - swi, x + bwi) 
@@ -121,21 +119,21 @@ isValid dict m = areValidRows dict (toLists m)
         areValidRows dict = all (isValidRow dict)
 
 isValidBoard :: StringSet -> Board -> Bool
-isValidBoard dict (Board _ _ (OMatrix _ m)) = isValid dict m
+isValidBoard dict (Board _ (OMatrix _ m)) = isValid dict m
 
 
 b1 :: Board
-b1@(Board (bw1:_) _ _) = singleton "elevator"
+b1@(Board (bw1:_) _) = singleton "elevator"
 b2 :: Board
-b2@(Board _ (bw2:_) _) = joinWordAt "camelback" 4 bw1 1 b1
+b2@(Board (bw2:_) _) = joinWordAt "camelback" 4 bw1 1 b1
 b3 :: Board
-b3@(Board (bw3:_) _ _) = joinWordAt "soccer" 3 bw2 7 b2
+b3@(Board (bw3:_) _) = joinWordAt "soccer" 3 bw2 7 b2
 b4 :: Board
-b4@(Board _ (bw4:_) _) = joinWordAt "rabbit" 5 bw1 5 b3
+b4@(Board (bw4:_) _) = joinWordAt "rabbit" 5 bw1 5 b3
 b5 :: Board
 b5 = joinWordAt "rocket" 0 bw4 0 b4
 b6 :: Board
-b6@(Board _ _ (OMatrix _ m)) = joinWordAt "contest" 5 bw3 0 b5
+b6@(Board _ (OMatrix _ m)) = joinWordAt "contest" 5 bw3 0 b5
 
 bmain :: IO ()
 bmain = do
