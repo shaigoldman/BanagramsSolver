@@ -3,7 +3,7 @@ module Lib
     ) where
 
 import BananaBoard
-import WordChooser
+import Bfs
 
 someFunc :: IO ()
 someFunc = do
