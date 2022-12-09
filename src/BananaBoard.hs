@@ -12,7 +12,7 @@ import Types (
     StringSet)
 import Data.Set (member)
 import Data.Matrix
-    ( (<->), (<|>), fromLists, getElem, matrix, 
+    ( (<->), (<|>), fromLists, matrix, 
       setElem, Matrix(..), toLists, transpose ) 
 
 blank :: Char
@@ -62,13 +62,6 @@ placeWord word p@(y, x) d om
             | otherwise = _om
             where (yo, xo) = addO _p og
 
-isEmptyFor :: (Int, Int) -> OMatrix -> Bool
-isEmptyFor p (OMatrix og m) = ooB || getElem y x m == blank
-    where (y, x) = addO p og
-          ooB = y < 1 || x < 1 
-                || y <= nrows m || x <= ncols m
-    
-
 singleton :: String -> Board
 singleton word = Board [BWord word (1,1) H] (OMatrix (1, 1) (fromLists [word]))
 
@@ -81,16 +74,15 @@ joinWordAt sw swi (BWord _ (y, x) d) bwi (Board bwords om)
                       else (y - swi, x + bwi) 
         om_new = placeWord sw p new_d om
 
-
 isValidBoard :: StringSet -> Board -> Bool
 isValidBoard dict (Board _ (OMatrix _ m)) = 
-    areValidRows dict (toLists m)
-    && areValidRows dict (toLists $ transpose m)
+    areValidRows (toLists m)
+    && areValidRows (toLists $ transpose m)
 
     where 
-        isValidRow :: StringSet -> String -> Bool
-        isValidRow dict row = all (`member` dict) $
+        isValidRow :: String -> Bool
+        isValidRow row = all (`member` dict) $
             filter (\w -> length w /= 1) (words row)
 
-        areValidRows :: StringSet -> [String] -> Bool
-        areValidRows dict = all (isValidRow dict)
+        areValidRows :: [String] -> Bool
+        areValidRows = all isValidRow
