@@ -117,7 +117,7 @@ main = do
     print $ do
         state@(_, Board (bword1:_) _) <- state1
         states <- playTurn (Just state) dict dictset 
-        playTurn (states !! 0) dict dictset 
+        playTurn (head states) dict dictset 
         -- state2 <- playBestWordAt dictset bword1 0 dict state
         -- state3 <- playBestWordAt dictset bword1 1 dict state2
         -- state4 <- playBestWordAt dictset bword1 2 dict state3

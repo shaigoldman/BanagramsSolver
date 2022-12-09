@@ -97,11 +97,12 @@ singleton word = Board [BWord word (1,1) H] (OMatrix (1, 1) (fromLists [word]))
 
 joinWordAt :: String -> Int -> BWord -> Int -> Board -> Board
 joinWordAt sw swi (BWord _ (y, x) d) bwi (Board bwords om)
-    = Board (BWord sw p d:bwords) om_new
+    = Board (BWord sw p new_d:bwords) om_new
     where 
+        new_d = flipD d
         p = if d == V then (y + bwi, x - swi) 
                       else (y - swi, x + bwi) 
-        om_new = placeWord sw p (flipD d) om
+        om_new = placeWord sw p new_d om
 
 
 type StringSet = Set String
