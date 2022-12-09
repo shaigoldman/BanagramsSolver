@@ -3,27 +3,25 @@ module Bfs (
 ) where
 
 import Data.Set (fromList)
-import Data.Maybe ( fromJust, isNothing, mapMaybe ) 
-import Data.List ( elemIndex )
+import Data.Maybe (fromJust, isNothing, mapMaybe) 
+import Data.List (elemIndex)
 import BananaBoard
-    ( joinWordAt,
+    (joinWordAt,
       singleton,
-      isValidBoard )
+      isValidBoard)
 import WordChooser
-    ( Hand, 
+    (Hand, 
       splitDict, 
       toHand, 
       buildWords, 
       bestWords, 
-      addTile )
+      addTile,
+      wordsWithChar)
 import Types (
     StringSet,
     Board (..),
     BWord (..),
     State)
-
-wordsWithChar :: Char -> [String] -> [String]
-wordsWithChar c = filter (elem c)
 
 playFirstTurn :: Hand -> [[String]] -> [State]
 playFirstTurn _ [] = []

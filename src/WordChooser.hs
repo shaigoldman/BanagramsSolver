@@ -4,7 +4,8 @@ module WordChooser (
     addTile,
     splitDict,
     buildWords,
-    bestWords
+    bestWords,
+    wordsWithChar
 ) where
 
 import Data.List (group, sort, groupBy, sortBy, elemIndex)
@@ -61,3 +62,6 @@ bestWords = sortBy scoreCmp
         scoreChar c = fromJust $ elemIndex c freqOrd
         -- see https://en.wikipedia.org/wiki/Letter_frequency
         freqOrd = "esiarntolcdugpmhbyfvkwzxjq"
+
+wordsWithChar :: Char -> [String] -> [String]
+wordsWithChar c = filter (elem c)
