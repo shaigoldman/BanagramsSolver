@@ -23,6 +23,7 @@ import Types (
     Board (..),
     BWord (..),
     State)
+import Control.Monad (when)
 
 playFirstTurn :: Hand -> StringLists -> [State]
 playFirstTurn _ [] = []
@@ -60,6 +61,13 @@ playTurn state@(_, board) dictset dictlist =
     mapMaybe (playBestWordAt dictset dictlist state) openTiles
         where openTiles = getOpenTiles board
         
+bfsLoop :: StringSet -> StringLists -> [State] -> [State]
+bfsLoop dictset dictlist beginStates = do
+    state@(hand, _) <- beginStates
+    if null hand then
+        return state
+    else 
+        bfsLoop dictset dictlist $ playTurn state dictset dictlist 
 
 main :: IO ()
 main = do
@@ -70,7 +78,4 @@ main = do
     let hand = toHand "riggyasdffddgdfsaaaeeeii"
     let state1 = playFirstTurn hand dictlist
     print state1
-    print $ do
-        state <- state1
-        state2 <- playTurn state dictset dictlist
-        playTurn state2 dictset dictlist
+    print $ head $ bfsLoop dictset dictlist state1
