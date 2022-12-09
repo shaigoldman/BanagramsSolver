@@ -71,10 +71,10 @@ bfsLoop dictset dictlist beginStates = do
 main :: IO ()
 main = do
     fcontents <- readFile "words.txt"
-    let ws = words fcontents
+    let ws = lines fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    let tiles = "aaaaddddeeefffgggiiirssy"
+    let tiles = "aaaaauuueeeiiisdgahfsjkadfhf"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
