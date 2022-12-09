@@ -134,13 +134,13 @@ b4@(Board (bw4:_) _) = joinWordAt "rabbit" 5 bw1 5 b3
 b5 :: Board
 b5 = joinWordAt "rocket" 0 bw4 0 b4
 b6 :: Board
-b6@(Board _ (OMatrix _ m)) = joinWordAt "contest" 5 bw3 0 b5
+b6@(Board _ (OMatrix _ mat)) = joinWordAt "contest" 5 bw3 0 b5
 
 bmain :: IO ()
 bmain = do
     fcontents <- readFile "words.txt"
     let dict = fromList $ words fcontents
-    if isValid dict m then
+    if isValid dict mat then
         print "b6 is a valid board"
     else print "b6 is invalid"
 
