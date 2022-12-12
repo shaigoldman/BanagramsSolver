@@ -3,8 +3,9 @@ module Bfs (
 ) where
 
 import Data.Set (fromList)
+import Data.Matrix (toList)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
-import Data.List (elemIndex)
+import Data.List (elemIndex, nubBy)
 import BananaBoard
     (joinWordAt,
       singleton,
@@ -22,7 +23,7 @@ import Types (
     StringLists,
     Board (..),
     BWord (..),
-    State)
+    State, OMatrix (OMatrix))
 
 playFirstTurn :: Hand -> StringLists -> [State]
 playFirstTurn _ [] = []
@@ -59,14 +60,22 @@ playTurn :: State -> StringSet -> StringLists -> [State]
 playTurn state@(_, board) dictset dictlist = 
     mapMaybe (playBestWordAt dictset dictlist state) openTiles
         where openTiles = getOpenTiles board
-        
+
+
+uniqueStates :: [State] -> [State]
+uniqueStates = nubBy (\x y -> idOf x == idOf y)
+    where 
+        idOf :: State -> String
+        idOf (_, Board _ (OMatrix _ m)) = toList m
+                
 
 bfsLoop :: Int -> StringSet -> StringLists -> [State] -> Maybe State
 bfsLoop 0 _ _ _ = Nothing
 bfsLoop _ _ _ [] = Nothing
 bfsLoop lim dictset dictlist beginStates
     | isNothing solved = 
-        bfsLoop (lim-1) dictset dictlist $ bfsNext beginStates
+        bfsLoop (lim-1) dictset dictlist 
+            $ uniqueStates $ bfsNext beginStates
     | otherwise = solved
     where
         solved = completeFrom beginStates
@@ -82,14 +91,13 @@ bfsLoop lim dictset dictlist beginStates
             | null hand = Just s
             | otherwise = completeFrom ss
 
-
 main :: IO ()
 main = do
     fcontents <- readFile "words.txt"
     let ws = lines fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    let tiles = "makemebannanagramsfromthesetiles"
+    let tiles = "makeaboardnowpleasemonkeypantsqqqqqqq"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
@@ -98,4 +106,4 @@ main = do
         Nothing -> putStrLn "no solution in 20"
         s -> do
             putStrLn "solved!\n" 
-            print s
+            print $ fromJust s
