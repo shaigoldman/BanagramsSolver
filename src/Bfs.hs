@@ -60,13 +60,28 @@ playTurn state@(_, board) dictset dictlist =
     mapMaybe (playBestWordAt dictset dictlist state) openTiles
         where openTiles = getOpenTiles board
         
-bfsLoop :: StringSet -> StringLists -> [State] -> [State]
-bfsLoop dictset dictlist beginStates = do
-    state@(hand, _) <- beginStates
-    if null hand then
-        return state
-    else 
-        bfsLoop dictset dictlist $ playTurn state dictset dictlist 
+
+bfsLoop :: Int -> StringSet -> StringLists -> [State] -> Maybe State
+bfsLoop 0 _ _ _ = Nothing
+bfsLoop _ _ _ [] = Nothing
+bfsLoop lim dictset dictlist beginStates
+    | isNothing solved = 
+        bfsLoop (lim-1) dictset dictlist $ bfsNext beginStates
+    | otherwise = solved
+    where
+        solved = completeFrom beginStates
+    
+        bfsNext :: [State] -> [State]
+        bfsNext states = do
+            state <- states
+            playTurn state dictset dictlist
+
+        completeFrom :: [State] -> Maybe State
+        completeFrom [] = Nothing
+        completeFrom (s@(hand, _):ss)
+            | null hand = Just s
+            | otherwise = completeFrom ss
+
 
 main :: IO ()
 main = do
@@ -74,13 +89,13 @@ main = do
     let ws = lines fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    let tiles = "aaaaauuueeeiiisdgahfsjkadfhf"
+    let tiles = "makemebannanagramsfromthesetiles"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
-    let res = bfsLoop dictset dictlist state1
+    let res = bfsLoop 20 dictset dictlist state1
     case res of
-        [] -> putStrLn "no solution"
-        (s:_) -> do
+        Nothing -> putStrLn "no solution in 20"
+        s -> do
             putStrLn "solved!\n" 
             print s
