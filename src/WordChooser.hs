@@ -53,7 +53,7 @@ buildWords hand = mapMaybe bw_pair
             Just _hand -> Just (word, _hand)
 
 scoreCmp :: String -> String -> Ordering
-scoreCmp x y = scoreWord x `compare` scoreWord y
+scoreCmp x y = scoreWord y `compare` scoreWord x
     where
         scoreWord :: String -> Int
         scoreWord w = sum $ map scoreChar w
