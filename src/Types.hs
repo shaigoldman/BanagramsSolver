@@ -8,12 +8,13 @@ module Types (
     BWord (..),
     OMatrix (..),
     Board (..),
-    State
+    State,
+    stateID
 ) where
 
 import Data.Set (Set)
 import Data.HashMap.Strict (HashMap)
-import Data.Matrix (Matrix)
+import Data.Matrix (Matrix, toList)
 
 type StringSet = Set String
 type StringLists = [[String]]
@@ -40,3 +41,5 @@ instance Show Board where
           ++ show om
 
 type State = (Hand, Board)
+stateID :: State -> String
+stateID (_, Board _ (OMatrix _ m)) = toList m

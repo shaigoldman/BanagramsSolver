@@ -3,9 +3,8 @@ module Bfs (
 ) where
 
 import Data.Set (fromList)
-import Data.Matrix (toList)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
-import Data.List (elemIndex, nubBy)
+import Data.List (elemIndex, nubBy, sortBy)
 import BananaBoard
     (joinWordAt,
       singleton,
@@ -15,7 +14,8 @@ import WordChooser
       splitDict, 
       toHand, 
       buildWords, 
-      bestWords, 
+      scoreCmp, 
+      sortWHPairs,
       addTile,
       wordsWithChar)
 import Types (
@@ -23,7 +23,8 @@ import Types (
     StringLists,
     Board (..),
     BWord (..),
-    State, OMatrix (OMatrix))
+    State,
+    stateID)
 
 playFirstTurn :: Hand -> StringLists -> [State]
 playFirstTurn _ [] = []
@@ -32,7 +33,7 @@ playFirstTurn hand (d:ds)
     | otherwise = 
         map (\(w, h) -> (h, singleton w)) bests
     where
-          bests = bestWords $ buildWords hand d
+          bests = sortWHPairs $ buildWords hand d
 
 playBestWordAt :: StringSet -> StringLists -> State -> (BWord, Int) -> Maybe State
 playBestWordAt _ [] _ _ = Nothing
@@ -41,7 +42,7 @@ playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
     | otherwise = best
     where
         c = word !! i
-        bests = bestWords $ buildWords (addTile c hand) $ wordsWithChar c d
+        bests = sortWHPairs $ buildWords (addTile c hand) $ wordsWithChar c d
 
         joinBestWord :: [(String, Hand)] -> Maybe State
         joinBestWord [] = Nothing
@@ -61,22 +62,21 @@ playTurn state@(_, board) dictset dictlist =
     mapMaybe (playBestWordAt dictset dictlist state) openTiles
         where openTiles = getOpenTiles board
 
-
 uniqueStates :: [State] -> [State]
-uniqueStates = nubBy (\x y -> idOf x == idOf y)
-    where 
-        idOf :: State -> String
-        idOf (_, Board _ (OMatrix _ m)) = toList m
-                
+uniqueStates = nubBy (\x y -> stateID x == stateID y)
 
-bfsLoop :: Int -> StringSet -> StringLists -> [State] -> Maybe State
+bestStates :: [State] -> [State]
+bestStates states = take 20 $ 
+    sortBy (\x y -> scoreCmp (stateID x) (stateID y)) states     
+
+bfsLoop :: Int -> StringSet -> StringLists -> [State] -> Maybe (State, Int)
 bfsLoop 0 _ _ _ = Nothing
 bfsLoop _ _ _ [] = Nothing
 bfsLoop lim dictset dictlist beginStates
     | isNothing solved = 
         bfsLoop (lim-1) dictset dictlist 
-            $ uniqueStates $ bfsNext beginStates
-    | otherwise = solved
+            $ (bestStates . uniqueStates . bfsNext) beginStates
+    | otherwise = Just (fromJust solved, lim)
     where
         solved = completeFrom beginStates
     
@@ -97,13 +97,15 @@ main = do
     let ws = lines fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    let tiles = "makeaboardnowpleasemonkeypantsqqqqqqq"
+    let tiles = "makeaboardnowpleasemonkeypantsgogogogohomerightnowpleaseleavetown"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
-    let res = bfsLoop 20 dictset dictlist state1
+    let lim = 20
+    let res = bfsLoop lim dictset dictlist state1
     case res of
         Nothing -> putStrLn "no solution in 20"
         s -> do
-            putStrLn "solved!\n" 
-            print $ fromJust s
+            let (state, n) = fromJust s
+            putStrLn $ "solved in " ++ show (1 + lim - n) ++ "!\n" 
+            print state

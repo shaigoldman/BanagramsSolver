@@ -4,7 +4,8 @@ module WordChooser (
     addTile,
     splitDict,
     buildWords,
-    bestWords,
+    scoreCmp,
+    sortWHPairs,
     wordsWithChar
 ) where
 
@@ -51,17 +52,21 @@ buildWords hand = mapMaybe bw_pair
             Nothing -> Nothing
             Just _hand -> Just (word, _hand)
 
-bestWords :: [(String, Hand)] -> [(String, Hand)]
-bestWords = sortBy scoreCmp
+scoreCmp :: String -> String -> Ordering
+scoreCmp x y = scoreWord x `compare` scoreWord y
     where
-        scoreCmp (x, _) (y, _) = scoreWord x `compare` scoreWord y
         scoreWord :: String -> Int
         scoreWord w = sum $ map scoreChar w
 
         scoreChar :: Char -> Int
+        scoreChar ' ' = 0
         scoreChar c = fromJust $ elemIndex c freqOrd
         -- see https://en.wikipedia.org/wiki/Letter_frequency
         freqOrd = "esiarntolcdugpmhbyfvkwzxjq"
+
+sortWHPairs :: [(String, Hand)] -> [(String, Hand)]
+sortWHPairs = sortBy (\x y -> scoreCmp (fst x) (fst y))
+        
 
 wordsWithChar :: Char -> [String] -> [String]
 wordsWithChar c = filter (elem c)
