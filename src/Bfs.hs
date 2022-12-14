@@ -18,7 +18,9 @@ import WordChooser
       scoreCmp, 
       sortWHPairs,
       addTile,
-      wordsWithChar)
+      wordsWithChar,
+      scoreWord
+      )
 import Types (
     Hand, 
     StringSet,
@@ -76,7 +78,11 @@ uniqueStates = nubBy (\x y -> stateID x == stateID y)
 
 bestStates :: [State] -> [State]
 bestStates states = take 100 $ 
-    sortBy (\x y -> scoreCmp (stateID x) (stateID y)) states     
+    sortBy (\x y -> scoreCmp (stateID x) (stateID y)) states  
+    where scoreCmpState :: State -> State -> Ordering  
+          scoreCmpState x y = scoreCmp (lettersOf x) (lettersOf y)
+          lettersOf :: State -> String
+          lettersOf state = filter isAlpha $ stateID state
 
 bfsLoop :: Int -> StringSet -> StringLists -> [State] -> Maybe (State, Int)
 bfsLoop 0 _ _ _ = Nothing
@@ -104,18 +110,20 @@ main :: IO ()
 main = do
     fcontents <- readFile "words.txt"
     let ws = lines fcontents
-    let dictlist = splitDict ws
-    let dictset = Data.Set.fromList ws
-    let tiles = "howareyousogoodatthis"
+        dictlist = splitDict ws
+        dictset = Data.Set.fromList ws
+        tiles = "howareyousogoodatthis"
     -- let tiles = "howareyousoquickatbananagrams"
     putStrLn $ "Tiles: " ++ tiles
+    print $ scoreCmp "q" "e"
     let hand = toHand tiles
-    let state1 = playFirstTurn hand dictlist
-    let lim = 20
-    let res = bfsLoop lim dictset dictlist state1
+        state1 = playFirstTurn hand dictlist
+        lim = 20
+        res = bfsLoop lim dictset dictlist state1
     case res of
         Nothing -> putStrLn "no solution in 20"
         s -> do
             let (state, n) = fromJust s
             putStrLn $ "solved in " ++ show (1 + lim - n) ++ "!\n" 
             print state
+            
