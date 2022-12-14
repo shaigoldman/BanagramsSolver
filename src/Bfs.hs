@@ -19,7 +19,6 @@ import WordChooser
       sortWHPairs,
       addTile,
       wordsWithChar,
-      scoreWord
       )
 import Types (
     Hand, 
@@ -78,7 +77,7 @@ uniqueStates = nubBy (\x y -> stateID x == stateID y)
 
 bestStates :: [State] -> [State]
 bestStates states = take 100 $ 
-    sortBy (\x y -> scoreCmp (stateID x) (stateID y)) states  
+    sortBy scoreCmpState states  
     where scoreCmpState :: State -> State -> Ordering  
           scoreCmpState x y = scoreCmp (lettersOf x) (lettersOf y)
           lettersOf :: State -> String
@@ -112,7 +111,7 @@ main = do
     let ws = lines fcontents
         dictlist = splitDict ws
         dictset = Data.Set.fromList ws
-        tiles = "howareyousogoodatthis"
+        tiles = "howareyousogoodatbanagrams"
     -- let tiles = "howareyousoquickatbananagrams"
     putStrLn $ "Tiles: " ++ tiles
     print $ scoreCmp "q" "e"
