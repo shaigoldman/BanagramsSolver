@@ -24,6 +24,7 @@ dependencies:
 - matrix >= 0.3.6.1
 - unordered-containers >= 0.2.19.1
 - containers >= 0.6.6
+- parallel >= 3.2.2.0
 
 ghc-options:
 - -Wall
@@ -47,6 +48,9 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -rtsopts
+    - -O2
+    - -fllvm
     dependencies:
     - BananaSolver
 
