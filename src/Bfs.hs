@@ -114,7 +114,6 @@ main = do
         tiles = "howareyousogoodatbanagrams"
     -- let tiles = "howareyousoquickatbananagrams"
     putStrLn $ "Tiles: " ++ tiles
-    print $ scoreCmp "q" "e"
     let hand = toHand tiles
         state1 = playFirstTurn hand dictlist
         lim = 20
