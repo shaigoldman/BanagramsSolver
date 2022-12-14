@@ -5,6 +5,7 @@ module Bfs (
 import Data.Set (fromList)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
 import Data.List (elemIndex, nubBy, sortBy)
+import Control.Parallel.Strategies
 import BananaBoard
     (joinWordAt,
       singleton,
