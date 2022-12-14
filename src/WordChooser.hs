@@ -69,6 +69,7 @@ buildWords hand = mapMaybe bw_pair
             Just _hand -> Just (word, _hand)
 
 scoreCmp :: String -> String -> Ordering
+-- flip x and y so sort puts highest scorers first 
 scoreCmp x y = scoreWord y `compare` scoreWord x
 
 scoreWord :: String -> Int

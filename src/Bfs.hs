@@ -5,7 +5,7 @@ module Bfs (
 import Data.Set (fromList)
 import Data.Char (isAlpha)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
-import Data.List (elemIndex, nubBy, sortBy)
+import Data.List (elemIndex, nubBy, sortBy, sort)
 import Control.Parallel.Strategies ()
 import BananaBoard
     ( singleton,
@@ -112,11 +112,11 @@ main = do
     let ws = lines fcontents
         dictlist = splitDict ws
         dictset = Data.Set.fromList ws
-        tiles = "howareyousogoodatbanagrams"
+        tiles = "howareyousounbelievablyquickatbananagrams"
     -- let tiles = "howareyousoquickatbananagrams"
-    putStrLn $ "Tiles: " ++ tiles
+    putStrLn $ "Prompt: " ++ tiles
+    putStrLn $ " = Tiles: " ++ sort tiles
     let hand = toHand tiles
-    print hand
     let state1 = playFirstTurn hand dictlist
         lim = 20
         res = bfsLoop lim dictset dictlist state1
@@ -126,4 +126,8 @@ main = do
             let (state, n) = fromJust s
             putStrLn $ "solved in " ++ show (1 + lim - n) ++ "!\n" 
             print state
+            let tilesPlayed = sort $ filter isAlpha $ stateID state
+            putStrLn $ "Tiles Played: " ++ show tilesPlayed
+            print $ "Tiles played == tiles given: " ++ show (tilesPlayed == sort tiles)
+
             
