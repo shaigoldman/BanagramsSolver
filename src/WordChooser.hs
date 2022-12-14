@@ -70,6 +70,7 @@ scoreCmp x y = scoreWord y `compare` scoreWord x
         scoreWord w = sum $ map scoreChar w
 
         scoreChar :: Char -> Int
+        scoreChar ' ' = 0
         scoreChar c = fromJust $ Map.lookup c letterFrequencies
 
 sortWHPairs :: [(String, Hand)] -> [(String, Hand)]
