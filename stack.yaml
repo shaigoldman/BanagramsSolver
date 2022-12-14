@@ -49,6 +49,7 @@ extra-deps:
 - vector-stream-0.1.0.0
 - text-2.0.1
 - binary-0.8.9.1
+- parallel-3.2.2.0
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

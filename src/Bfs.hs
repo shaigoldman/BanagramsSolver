@@ -97,7 +97,7 @@ main = do
     let ws = lines fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    let tiles = "makeaboardnowplease"
+    let tiles = "makeaboardnowpleaseokaybyeokaygoodbyeqqquu"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
