@@ -12,6 +12,7 @@ import BananaBoard
       joinWordAt)
 import WordChooser
     ( joinHands,
+      playTile,
       splitDict, 
       toHand, 
       buildWords, 
@@ -58,8 +59,8 @@ playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
                 joinRes = joinWordAt dictset w w_ind bword i board
                 res = do
                     (newboard, playedOverSpace) <- joinRes
-                    let newhand = joinHands h $
-                         (toHand . filter isAlpha . tail) playedOverSpace
+                    let newhand = playTile c $ joinHands h $
+                         (toHand . filter isAlpha) playedOverSpace
                     return (newhand, newboard)
 
 
@@ -115,7 +116,8 @@ main = do
     -- let tiles = "howareyousoquickatbananagrams"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
-        state1 = playFirstTurn hand dictlist
+    print hand
+    let state1 = playFirstTurn hand dictlist
         lim = 20
         res = bfsLoop lim dictset dictlist state1
     case res of

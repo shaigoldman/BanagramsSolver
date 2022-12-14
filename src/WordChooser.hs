@@ -2,6 +2,7 @@ module WordChooser (
     Hand,
     toHand,
     joinHands,
+    playTile,
     addTile,
     splitDict,
     buildWords,
