@@ -8,6 +8,7 @@ module Types (
     BWord (..),
     OMatrix (..),
     Board (..),
+    boardID,
     State,
     stateID
 ) where
@@ -39,7 +40,9 @@ instance Show Board where
     show (Board bwords om) = 
          "bwords: " ++ show bwords ++ "\n" 
           ++ show om
+boardID :: Board -> String
+boardID (Board _ (OMatrix _ m)) = toList m
 
 type State = (Hand, Board)
 stateID :: State -> String
-stateID (_, Board _ (OMatrix _ m)) = toList m
+stateID (_, board) = boardID board

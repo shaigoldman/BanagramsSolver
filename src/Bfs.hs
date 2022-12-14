@@ -24,6 +24,7 @@ import Types (
     StringLists,
     Board (..),
     BWord (..),
+    boardID,
     State,
     stateID)
 
@@ -48,7 +49,8 @@ playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
         joinBestWord :: [(String, Hand)] -> Maybe State
         joinBestWord [] = Nothing
         joinBestWord ((w, h): xs)
-            | isValidBoard dictset newboard = Just (h, newboard)
+            | isValidBoard dictset newboard && boardID newboard /= boardID board 
+                = Just (h, newboard)
             | otherwise = joinBestWord xs
             where newboard = joinWordAt w (fromJust (elemIndex c w)) bword i board
         
