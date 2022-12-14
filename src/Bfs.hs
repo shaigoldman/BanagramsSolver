@@ -67,7 +67,7 @@ uniqueStates :: [State] -> [State]
 uniqueStates = nubBy (\x y -> stateID x == stateID y)
 
 bestStates :: [State] -> [State]
-bestStates states = take 20 $ 
+bestStates states = take 100 $ 
     sortBy (\x y -> scoreCmp (stateID x) (stateID y)) states     
 
 bfsLoop :: Int -> StringSet -> StringLists -> [State] -> Maybe (State, Int)
@@ -98,7 +98,8 @@ main = do
     let ws = lines fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    let tiles = "makeaboardnowpleaseokaybyeokaygoodbyeqqquu"
+    -- let tiles = "howareyousogoodatbananagrams"
+    let tiles = "howareyousoquickatbananagrams"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
