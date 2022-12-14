@@ -50,6 +50,16 @@ extra-deps:
 - text-2.0.1
 - binary-0.8.9.1
 - parallel-3.2.2.0
+- monad-par-0.3.5
+- abstract-deque-0.3@sha256:308bff92bb8b6621ed1dae718e859da145c8f31b8a9050aeacac40a8a21c9c90,2565
+- abstract-par-0.3.3@sha256:2c80c194429e8ed9a8f37a4c58a61b36b11e04c637d3e0bfb32d111978fd8885,1488
+- monad-par-extras-0.3.3@sha256:b448c7565958ba5dfe8a0f88f17574059176cbd26e632e40c361520e63a206fd,2106
+- mwc-random-0.15.0.2@sha256:109e0fb72ce64bda468fc44d9cb5abbf455d6337140b57eb851a8183baba0597,3372
+- cereal-0.5.8.3@sha256:87a227c7b510217ea059db3dd59d9665edd8f0d1d3d8de39458e371a1d9402fb,2767
+- math-functions-0.3.4.2@sha256:5d942f0d6478c2a6b22049c033943538f8dd357c66ff874d328082136433cafb,4791
+- random-1.2.1.1@sha256:dea1f11e5569332dc6c8efaad1cb301016a5587b6754943a49f9de08ae0e56d9,6541
+- data-default-class-0.1.2.0@sha256:63e62120b7efd733a5a17cf59ceb43268e9a929c748127172d7d42f4a336e327,542
+- splitmix-0.1.0.4@sha256:804e2574bc7e32d08cbab91e47ee6287b4df7d50851d73f9e778f94a9a7814c7,6521
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

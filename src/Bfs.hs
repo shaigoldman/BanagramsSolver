@@ -7,6 +7,8 @@ import Data.Char (isAlpha)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
 import Data.List (elemIndex, nubBy, sortBy, sort)
 import Control.Parallel.Strategies ()
+import Control.Monad.Par (fork, spawnP)
+-- import Control.Monad.Par (spawn,spawnP)
 import BananaBoard
     ( singleton,
       joinWordAt)
