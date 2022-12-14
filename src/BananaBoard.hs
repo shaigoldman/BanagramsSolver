@@ -1,7 +1,9 @@
 module BananaBoard (
-    joinWordAt,
     singleton,
+    getSpaceAt,
+    joinWordAt,
     isValidBoard,
+    bmain
 ) where
 import Types (
     Direction (..), 
@@ -10,22 +12,23 @@ import Types (
     BWord (..), 
     Board (..),
     StringSet)
-import Data.Set (member)
+import Data.Set (member, fromList)
+import Data.Maybe (fromMaybe)
 import Data.Matrix
     ( (<->), (<|>), fromLists, matrix, 
-      setElem, Matrix(..), toLists, transpose ) 
-
-blank :: Char
-blank = ' '
+      setElem, safeGet, Matrix(..), toLists, transpose ) 
 
 empty :: Int -> Int -> Matrix Char
-empty y x = matrix y x (\(_, _) -> blank)
+empty y x = matrix y x (\(_, _) -> ' ')
+
+singleton :: String -> Board
+singleton word = Board [BWord word (1,1) H] (OMatrix (1, 1) (fromLists [word]))
 
 -- add origin offset to coords
-addO :: (Int, Int) -> (Int, Int) -> (Int, Int) 
-addO (y, x) (y0, x0) = (addO1 y y0, addO1 x x0)
 addO1 :: Num a => a -> a -> a
 addO1 c c0 = c+c0-1
+addO :: (Int, Int) -> (Int, Int) -> (Int, Int) 
+addO (y, x) (y0, x0) = (addO1 y y0, addO1 x x0)
 
 placeWord :: String -> (Int, Int) -> Direction -> OMatrix -> OMatrix
 placeWord word p@(y, x) d om
@@ -62,17 +65,30 @@ placeWord word p@(y, x) d om
             | otherwise = _om
             where (yo, xo) = addO _p og
 
-singleton :: String -> Board
-singleton word = Board [BWord word (1,1) H] (OMatrix (1, 1) (fromLists [word]))
-
-joinWordAt :: String -> Int -> BWord -> Int -> Board -> Board
-joinWordAt sw swi (BWord _ (y, x) d) bwi (Board bwords om)
-    = Board (BWord sw p new_d:bwords) om_new
+getSpaceAt ::  (Int, Int) -> Int -> Direction -> OMatrix -> String
+getSpaceAt p len d (OMatrix og m)
+    | d == H = map getElemX $ take len [xo..]
+    | otherwise = map getElemY $ take len [yo..]
     where 
-        new_d = flipD d
-        p = if d == V then (y + bwi, x - swi) 
-                      else (y - swi, x + bwi) 
-        om_new = placeWord sw p new_d om
+        (yo, xo) = addO p og
+        getElemX :: Int -> Char
+        getElemX x = fromMaybe ' ' $ safeGet yo x m
+        getElemY :: Int -> Char
+        getElemY y = fromMaybe ' ' $ safeGet y xo m
+
+
+-- on top of a wordspace on a board, can we play this word?
+validPlay :: String -> String -> Bool
+validPlay [] _ = True
+validPlay _ [] = False
+validPlay (space:ss) (word:ws)
+    | space == ' ' = validPlay ss ws
+    | otherwise = space == word && validPlay ss ws
+
+-- is this play both valid and also meaningful?
+goodPlay :: String -> String -> Bool
+goodPlay wordspace word =  
+    ' ' `elem` wordspace && validPlay wordspace word
 
 isValidBoard :: StringSet -> Board -> Bool
 isValidBoard dict (Board _ (OMatrix _ m)) = 
@@ -86,3 +102,42 @@ isValidBoard dict (Board _ (OMatrix _ m)) =
 
         areValidRows :: [String] -> Bool
         areValidRows = all isValidRow
+
+joinWordAt :: StringSet -> String -> Int -> BWord -> Int -> Board -> Maybe (Board, String)
+joinWordAt dictset s s_ind (BWord _ (y, x) d) bw_ind (Board bwords om)
+    | goodPlay boardspace s && isValidBoard dictset newboard =
+        Just (newboard, boardspace)
+    | otherwise = Nothing
+    where
+        new_d = flipD d
+        boardspace = getSpaceAt p (length s) new_d om
+        om_new = placeWord s p new_d om
+        newboard = Board (BWord s p new_d:bwords) om_new
+        p
+            | d == V = (y + bw_ind, x - s_ind) 
+            | otherwise = (y - s_ind, x + bw_ind) 
+
+
+bmain :: IO ()
+bmain = do
+    fcontents <- readFile "words.txt"
+    let ws = lines fcontents
+    let dictset = Data.Set.fromList ws
+    let b1@(Board (bw:_) _) = singleton "elevator"
+    let b2 = joinWordAt dictset "laser" 0 bw 1 b1
+    case b2 of 
+        Nothing -> print "nope..."
+        Just b -> print b
+    let s = "lasor"
+        s_ind = 0
+        (BWord _ (y, x) d) = bw
+        bw_ind = 1
+        (Board bwords om) = b1
+        p = if d == V then (y + bw_ind, x - s_ind) 
+                      else (y - s_ind, x + bw_ind) 
+        new_d = flipD d
+        boardspace = getSpaceAt p (length s) new_d om
+        om_new = placeWord s p new_d om
+        newboard = Board (BWord s p new_d:bwords) om_new
+    print newboard
+    

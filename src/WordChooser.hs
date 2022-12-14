@@ -1,17 +1,18 @@
 module WordChooser (
     Hand,
     toHand,
+    joinHands,
     addTile,
     splitDict,
     buildWords,
     scoreCmp,
     sortWHPairs,
-    wordsWithChar
+    wordsWithChar,
 ) where
 
 import Data.List (group, sort, groupBy, sortBy)
 import Data.Maybe (fromJust, mapMaybe)
-import Data.HashMap.Strict (fromList, member, update, alter)
+import Data.HashMap.Strict (fromList, member, update, alter, unionWith)
 import Types (Hand, StringLists)
 import qualified Data.Map as Map
 
@@ -34,6 +35,9 @@ splitDict dict = groupBy lengthEq $ sortBy lengthCmp dict
 toHand :: String -> Hand
 toHand hand = Data.HashMap.Strict.fromList $ map (\s -> (head s, length s))
     $ (group . sort) hand
+
+joinHands :: Hand -> Hand -> Hand 
+joinHands = unionWith (+)
 
 playTile :: Char -> Hand -> Hand
 playTile = update dec
@@ -75,7 +79,7 @@ scoreCmp x y = scoreWord y `compare` scoreWord x
 
 sortWHPairs :: [(String, Hand)] -> [(String, Hand)]
 sortWHPairs = sortBy (\x y -> scoreCmp (fst x) (fst y))
-        
+
 
 wordsWithChar :: Char -> [String] -> [String]
 wordsWithChar c = filter (elem c)

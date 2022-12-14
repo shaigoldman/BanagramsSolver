@@ -3,15 +3,15 @@ module Bfs (
 ) where
 
 import Data.Set (fromList)
+import Data.Char (isAlpha)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
 import Data.List (elemIndex, nubBy, sortBy)
 import Control.Parallel.Strategies ()
 import BananaBoard
-    (joinWordAt,
-      singleton,
-      isValidBoard)
+    ( singleton,
+      joinWordAt)
 import WordChooser
-    (Hand, 
+    ( joinHands,
       splitDict, 
       toHand, 
       buildWords, 
@@ -20,11 +20,11 @@ import WordChooser
       addTile,
       wordsWithChar)
 import Types (
+    Hand, 
     StringSet,
     StringLists,
     Board (..),
     BWord (..),
-    boardID,
     State,
     stateID)
 
@@ -45,16 +45,22 @@ playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
     where
         c = word !! i
         bests = sortWHPairs $ buildWords (addTile c hand) $ wordsWithChar c d
+        best = joinBestWord bests
 
         joinBestWord :: [(String, Hand)] -> Maybe State
         joinBestWord [] = Nothing
         joinBestWord ((w, h): xs)
-            | isValidBoard dictset newboard && boardID newboard /= boardID board 
-                = Just (h, newboard)
-            | otherwise = joinBestWord xs
-            where newboard = joinWordAt w (fromJust (elemIndex c w)) bword i board
-        
-        best = joinBestWord bests
+            | isNothing res = joinBestWord xs
+            | otherwise = res
+            where 
+                w_ind = fromJust (elemIndex c w)
+                joinRes = joinWordAt dictset w w_ind bword i board
+                res = do
+                    (newboard, playedOverSpace) <- joinRes
+                    let newhand = joinHands h $
+                         (toHand . filter isAlpha . tail) playedOverSpace
+                    return (newhand, newboard)
+
 
 getOpenTiles :: Board -> [(BWord, Int)]
 getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
@@ -100,8 +106,8 @@ main = do
     let ws = lines fcontents
     let dictlist = splitDict ws
     let dictset = Data.Set.fromList ws
-    -- let tiles = "howareyousogoodatbananagrams"
-    let tiles = "howareyousoquickatbananagrams"
+    let tiles = "howareyousogoodatthis"
+    -- let tiles = "howareyousoquickatbananagrams"
     putStrLn $ "Tiles: " ++ tiles
     let hand = toHand tiles
     let state1 = playFirstTurn hand dictlist
