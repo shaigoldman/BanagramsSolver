@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 module Types (
     StringSet,
     StringLists,
@@ -12,6 +13,8 @@ module Types (
     State,
     stateID
 ) where
+
+ 
 
 import Data.Set (Set)
 import Data.HashMap.Strict (HashMap)
