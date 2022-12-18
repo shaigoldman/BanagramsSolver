@@ -6,8 +6,7 @@ import Data.Set (fromList)
 import Data.Char (isAlpha)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
 import Data.List (elemIndex, nubBy, sortBy, sort)
-import Control.Parallel.Strategies as PS
-import Control.Monad.Par as MP
+import Control.Parallel.Strategies (parMap, rdeepseq)
 import BananaBoard
     ( singleton,
       joinWordAt)
@@ -30,6 +29,7 @@ import Types (
     BWord (..),
     State,
     stateID)
+
 
 playFirstTurn :: Hand -> StringLists -> [State]
 playFirstTurn _ [] = []
@@ -97,7 +97,7 @@ bfsLoop lim dictset dictlist beginStates
         solved = completeFrom beginStates
     
         bfsNext :: [State] -> [State]
-        bfsNext states = concat $ PS.parMap rpar (playTurn dictset dictlist) states
+        bfsNext states = concat $ parMap rdeepseq (playTurn dictset dictlist) states
 
         -- bfsNext states = do
         --     state <- states
