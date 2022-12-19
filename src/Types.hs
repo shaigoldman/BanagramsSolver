@@ -5,8 +5,10 @@ module Types (
     Hand,
     Direction (H, V),
     flipD,
+    Location (..),
     BWord (..),
     OMatrix (..),
+    setElemOMatrix,
     Board (..),
     boardID,
     State,
@@ -19,6 +21,7 @@ import Data.Set (Set)
 import Data.HashMap.Strict (HashMap)
 import Data.Matrix (Matrix, toList)
 import Control.DeepSeq ( NFData(..) )
+import Data.Matrix (setElem) 
 
 type StringSet = Set String
 type StringLists = [[String]]
@@ -32,15 +35,25 @@ flipD V = H
 instance NFData Direction where
     rnf d = d `seq` ()
 
+data Location = Location Int Int deriving (Eq)
+instance Show Location where
+    show (Location y x) = show (y,x)
+instance NFData Location where
+    rnf (Location y x) = rnf y `seq` rnf x
 
- -- matrix with origin 
-data OMatrix = OMatrix (Int, Int) CharMatrix
+ -- OMatrix stores the 'virtual' origin with a CharMatrix to allow 
+ -- for easier usage of the CharMatrix.
+data OMatrix = OMatrix Location CharMatrix
+setElemOMatrix :: Char -> Location -> OMatrix -> OMatrix
+setElemOMatrix c (Location y x) (OMatrix p m) = OMatrix p new_m
+    where new_m = setElem c (y,x) m
+
 instance Show OMatrix where
     show (OMatrix p m) = show m ++ "\n" ++ show p
 instance NFData OMatrix where
     rnf om = om `seq` ()
 
-data BWord = BWord String (Int, Int) Direction
+data BWord = BWord String Location Direction
              deriving (Eq, Show) 
 instance NFData BWord where
     rnf (BWord word p d) = rnf word `seq` rnf p `seq` rnf d
