@@ -5,7 +5,7 @@ module Bfs (
 ) where
 
 import Data.Char (isAlpha)
-import Data.Maybe (fromJust, isJust, mapMaybe) 
+import Data.Maybe (fromJust, isJust, catMaybes, mapMaybe) 
 import Data.List (elemIndex, nubBy, sortBy)
 import Control.Parallel.Strategies (parMap, rdeepseq)
 import BananaBoard
@@ -69,10 +69,16 @@ getOpenTiles :: Board -> [(BWord, Int)]
 getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
 
 -- Given a state finds all open tiles and the best word to play at each open tile. 
+playTurnPar :: DictPair -> State -> [State]
+playTurnPar dictpair state@(_, board) = 
+    catMaybes $ parMap rdeepseq (playBestWordAt dictpair state) openTiles
+        where openTiles = getOpenTiles board
+
 playTurn :: DictPair -> State -> [State]
 playTurn dictpair state@(_, board) = 
     mapMaybe (playBestWordAt dictpair state) openTiles
         where openTiles = getOpenTiles board
+
 
 uniqueStates :: [State] -> [State]
 uniqueStates = nubBy (\x y -> stateID x == stateID y)
@@ -85,7 +91,6 @@ bestStates stepsize states = take stepsize $
           lettersOf :: State -> String
           lettersOf state = filter isAlpha $ stateID state
 
-
 bfsNextSeq :: DictPair -> [State] -> [State]
 bfsNextSeq dictpair states = do
     state <- states
@@ -93,7 +98,6 @@ bfsNextSeq dictpair states = do
 
 bfsNextPar :: DictPair -> [State] -> [State]
 bfsNextPar dictpair states = concat $ parMap rdeepseq (playTurn dictpair) states
-
 
 bfsLoop :: (DictPair -> [State] -> [State]) -> Int -> Int -> DictPair -> [State] -> Maybe State
 bfsLoop _ 0 _ _ _ = Nothing
