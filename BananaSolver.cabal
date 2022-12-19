@@ -28,7 +28,6 @@ library
       BananaBoard
       Bfs
       Hand
-      Lib
       Types
       WordChooser
   other-modules:
