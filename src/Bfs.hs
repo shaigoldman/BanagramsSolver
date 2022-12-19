@@ -6,7 +6,7 @@ import Data.Set (fromList)
 import Data.Char (isAlpha)
 import Data.Maybe (fromJust, isNothing, mapMaybe) 
 import Data.List (elemIndex, nubBy, sortBy, sort)
-import Control.Parallel.Strategies ()
+import Control.Parallel.Strategies (parMap, rdeepseq)
 import BananaBoard
     ( singleton,
       joinWordAt)
@@ -29,6 +29,7 @@ import Types (
     BWord (..),
     State,
     stateID)
+
 
 playFirstTurn :: Hand -> StringLists -> [State]
 playFirstTurn _ [] = []
@@ -68,8 +69,8 @@ getOpenTiles :: Board -> [(BWord, Int)]
 getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
 
 -- Given a state finds all open tiles and the best word to play at each open tile. 
-playTurn :: State -> StringSet -> StringLists -> [State]
-playTurn state@(_, board) dictset dictlist = 
+playTurn :: StringSet -> StringLists -> State -> [State]
+playTurn dictset dictlist state@(_, board) = 
     mapMaybe (playBestWordAt dictset dictlist state) openTiles
         where openTiles = getOpenTiles board
 
@@ -96,9 +97,14 @@ bfsLoop lim dictset dictlist beginStates
         solved = completeFrom beginStates
     
         bfsNext :: [State] -> [State]
-        bfsNext states = do
-            state <- states
-            playTurn state dictset dictlist
+        bfsNext states = concat $ parMap rdeepseq (playTurn dictset dictlist) states
+
+        -- bfsNext states = do
+        --     state <- states
+        --     let new_state = MP.runPar $ do 
+        --         par_state <- MP.spawnP (playTurn dictset dictlist state)
+        --         return par_state
+        --     return new_state
 
         completeFrom :: [State] -> Maybe State
         completeFrom [] = Nothing
@@ -112,7 +118,7 @@ main = do
     let ws = lines fcontents
         dictlist = splitDict ws
         dictset = Data.Set.fromList ws
-        tiles = "howareyousounbelievablyquickatbananagrams"
+        tiles = "howareyousounbelievablyquickatbananagram"
     -- let tiles = "howareyousoquickatbananagrams"
     putStrLn $ "Prompt: " ++ tiles
     putStrLn $ " = Tiles: " ++ sort tiles
