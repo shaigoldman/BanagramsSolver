@@ -1,30 +1,30 @@
 module Bfs (
-    main,
+    playFirstTurn,
+    bfsSeq,
+    bfsPar
 ) where
 
-import Data.Set (fromList)
 import Data.Char (isAlpha)
-import Data.Maybe (fromJust, isNothing, mapMaybe) 
-import Data.List (elemIndex, nubBy, sortBy, sort)
+import Data.Maybe (fromJust, isJust, mapMaybe) 
+import Data.List (elemIndex, nubBy, sortBy)
 import Control.Parallel.Strategies (parMap, rdeepseq)
 import BananaBoard
     ( singleton,
       joinWordAt)
-import WordChooser
-    ( joinHands,
-      playTile,
-      splitDict, 
-      toHand, 
-      buildWords, 
-      scoreCmp, 
-      sortWHPairs,
-      addTile,
-      wordsWithChar,
-      )
+import Hand (
+    joinHands,
+    playTile,
+    addTile,
+    toHand)
+import WordChooser( 
+    buildWords, 
+    scoreCmp, 
+    sortWHPairs,
+    wordsWithChar)
 import Types (
-    Hand, 
-    StringSet,
+    Hand,
     StringLists,
+    DictPair,
     Board (..),
     BWord (..),
     State,
@@ -40,11 +40,11 @@ playFirstTurn hand (d:ds)
     where
           bests = sortWHPairs $ buildWords hand d
 
-playBestWordAt :: StringSet -> StringLists -> State -> (BWord, Int) -> Maybe State
-playBestWordAt _ [] _ _ = Nothing
-playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
-    | isNothing best = playBestWordAt dictset ds s (bword, i) 
-    | otherwise = best
+playBestWordAt :: DictPair -> State -> (BWord, Int) -> Maybe State
+playBestWordAt (_, []) _ _ = Nothing
+playBestWordAt (dictset, d:ds) s@(hand, board) (bword@(BWord word _ _), i)
+    | isJust best = best
+    | otherwise = playBestWordAt (dictset, ds) s (bword, i) 
     where
         c = word !! i
         bests = sortWHPairs $ buildWords (addTile c hand) $ wordsWithChar c d
@@ -53,8 +53,8 @@ playBestWordAt dictset (d:ds) s@(hand, board) (bword@(BWord word _ _), i)
         joinBestWord :: [(String, Hand)] -> Maybe State
         joinBestWord [] = Nothing
         joinBestWord ((w, h): xs)
-            | isNothing res = joinBestWord xs
-            | otherwise = res
+            | isJust res = res
+            | otherwise = joinBestWord xs
             where 
                 w_ind = fromJust (elemIndex c w)
                 joinRes = joinWordAt dictset w w_ind bword i board
@@ -69,71 +69,54 @@ getOpenTiles :: Board -> [(BWord, Int)]
 getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
 
 -- Given a state finds all open tiles and the best word to play at each open tile. 
-playTurn :: StringSet -> StringLists -> State -> [State]
-playTurn dictset dictlist state@(_, board) = 
-    mapMaybe (playBestWordAt dictset dictlist state) openTiles
+playTurn :: DictPair -> State -> [State]
+playTurn dictpair state@(_, board) = 
+    mapMaybe (playBestWordAt dictpair state) openTiles
         where openTiles = getOpenTiles board
 
 uniqueStates :: [State] -> [State]
 uniqueStates = nubBy (\x y -> stateID x == stateID y)
 
-bestStates :: [State] -> [State]
-bestStates states = take 100 $ 
+bestStates :: Int -> [State] -> [State]
+bestStates stepsize states = take stepsize $ 
     sortBy scoreCmpState states  
     where scoreCmpState :: State -> State -> Ordering  
           scoreCmpState x y = scoreCmp (lettersOf x) (lettersOf y)
           lettersOf :: State -> String
           lettersOf state = filter isAlpha $ stateID state
 
-bfsLoop :: Int -> StringSet -> StringLists -> [State] -> Maybe (State, Int)
-bfsLoop 0 _ _ _ = Nothing
-bfsLoop _ _ _ [] = Nothing
-bfsLoop lim dictset dictlist beginStates
-    | isNothing solved = 
-        bfsLoop (lim-1) dictset dictlist 
-            $ (bestStates . uniqueStates . bfsNext) beginStates
-    | otherwise = Just (fromJust solved, lim)
+
+bfsNextSeq :: DictPair -> [State] -> [State]
+bfsNextSeq dictpair states = do
+    state <- states
+    playTurn dictpair state
+
+bfsNextPar :: DictPair -> [State] -> [State]
+bfsNextPar dictpair states = concat $ parMap rdeepseq (playTurn dictpair) states
+
+
+bfsLoop :: (DictPair -> [State] -> [State]) -> Int -> Int -> DictPair -> [State] -> Maybe State
+bfsLoop _ 0 _ _ _ = Nothing
+bfsLoop _ _ _ _ [] = Nothing
+bfsLoop bfsNexter lim stepsize dictpair beginStates
+    | isJust solved = solved
+    | otherwise = next
     where
         solved = completeFrom beginStates
-    
-        bfsNext :: [State] -> [State]
-        bfsNext states = concat $ parMap rdeepseq (playTurn dictset dictlist) states
-
-        -- bfsNext states = do
-        --     state <- states
-        --     let new_state = MP.runPar $ do 
-        --         par_state <- MP.spawnP (playTurn dictset dictlist state)
-        --         return par_state
-        --     return new_state
-
         completeFrom :: [State] -> Maybe State
         completeFrom [] = Nothing
         completeFrom (s@(hand, _):ss)
             | null hand = Just s
             | otherwise = completeFrom ss
+        next = bfsLoop bfsNexter (lim-1) stepsize dictpair
+            $ (bestStates stepsize . uniqueStates . bfsNexter dictpair) 
+                beginStates
 
-main :: IO ()
-main = do
-    fcontents <- readFile "words.txt"
-    let ws = lines fcontents
-        dictlist = splitDict ws
-        dictset = Data.Set.fromList ws
-        tiles = "howareyousounbelievablyquickatbananagram"
-    -- let tiles = "howareyousoquickatbananagrams"
-    putStrLn $ "Prompt: " ++ tiles
-    putStrLn $ " = Tiles: " ++ sort tiles
-    let hand = toHand tiles
-    let state1 = playFirstTurn hand dictlist
-        lim = 20
-        res = bfsLoop lim dictset dictlist state1
-    case res of
-        Nothing -> putStrLn "no solution in 20"
-        s -> do
-            let (state, n) = fromJust s
-            putStrLn $ "solved in " ++ show (1 + lim - n) ++ "!\n" 
-            print state
-            let tilesPlayed = sort $ filter isAlpha $ stateID state
-            putStrLn $ "Tiles Played: " ++ show tilesPlayed
-            print $ "Tiles played == tiles given: " ++ show (tilesPlayed == sort tiles)
+runBfs :: (DictPair -> [State] -> [State]) -> String -> Int -> Int -> DictPair -> Maybe State
+runBfs f handstring lim stepsize d@(_, dictlist) = 
+    bfsLoop f lim stepsize d $ playFirstTurn (toHand handstring) dictlist
 
-            
+bfsSeq :: String -> Int -> Int -> DictPair -> Maybe State
+bfsSeq = runBfs bfsNextSeq
+bfsPar :: String -> Int -> Int -> DictPair -> Maybe State
+bfsPar = runBfs bfsNextPar

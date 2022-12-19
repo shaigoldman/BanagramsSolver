@@ -1,6 +1,7 @@
 module Types (
     StringSet,
     StringLists,
+    splitDict,
     CharMatrix,
     Hand,
     Direction (H, V),
@@ -12,7 +13,8 @@ module Types (
     Board (..),
     boardID,
     State,
-    stateID
+    stateID,
+    DictPair
 ) where
 
  
@@ -21,10 +23,16 @@ import Data.Set (Set)
 import Data.HashMap.Strict (HashMap)
 import Data.Matrix (Matrix, toList, setElem)
 import Control.DeepSeq ( NFData(..) )
+import Data.List (groupBy, sortBy)
 
 type StringSet = Set String
+
 type StringLists = [[String]]
-type CharMatrix = Matrix Char
+splitDict :: [String] -> StringLists
+splitDict dict = groupBy lengthEq $ sortBy lengthCmp dict
+    where lengthCmp x y = length y `compare` length x
+          lengthEq x y = length x == length y
+
 type Hand = HashMap Char Int
 
 data Direction = H|V deriving (Eq, Show) -- horizontal or vertical
@@ -40,13 +48,14 @@ instance Show Location where
 instance NFData Location where
     rnf (Location y x) = rnf y `seq` rnf x
 
+type CharMatrix = Matrix Char
+
  -- OMatrix stores the 'virtual' origin with a CharMatrix to allow 
  -- for easier usage of the CharMatrix.
 data OMatrix = OMatrix Location CharMatrix
 setElemOMatrix :: Char -> Location -> OMatrix -> OMatrix
 setElemOMatrix c (Location y x) (OMatrix p m) = OMatrix p new_m
     where new_m = setElem c (y,x) m
-
 instance Show OMatrix where
     show (OMatrix p m) = show m ++ "\n" ++ show p
 instance NFData OMatrix where
@@ -71,3 +80,4 @@ type State = (Hand, Board)
 stateID :: State -> String
 stateID (_, board) = boardID board
 
+type DictPair = (StringSet, StringLists)

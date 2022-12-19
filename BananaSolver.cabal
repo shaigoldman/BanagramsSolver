@@ -27,6 +27,7 @@ library
   exposed-modules:
       BananaBoard
       Bfs
+      Hand
       Lib
       Types
       WordChooser
