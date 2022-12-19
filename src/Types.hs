@@ -19,9 +19,8 @@ module Types (
 
 import Data.Set (Set)
 import Data.HashMap.Strict (HashMap)
-import Data.Matrix (Matrix, toList)
+import Data.Matrix (Matrix, toList, setElem)
 import Control.DeepSeq ( NFData(..) )
-import Data.Matrix (setElem) 
 
 type StringSet = Set String
 type StringLists = [[String]]

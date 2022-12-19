@@ -43,7 +43,6 @@ library
     , monad-par >=0.3.5
     , parallel >=3.2.2.0
     , unordered-containers >=0.2.19.1
-    , monad-par >= 0.3.5
   default-language: Haskell2010
 
 executable BananaSolver-exe
@@ -62,7 +61,6 @@ executable BananaSolver-exe
     , monad-par >=0.3.5
     , parallel >=3.2.2.0
     , unordered-containers >=0.2.19.1
-    , monad-par >= 0.3.5
   default-language: Haskell2010
 
 test-suite BananaSolver-test
@@ -82,5 +80,4 @@ test-suite BananaSolver-test
     , monad-par >=0.3.5
     , parallel >=3.2.2.0
     , unordered-containers >=0.2.19.1
-    , monad-par >= 0.3.5
   default-language: Haskell2010
