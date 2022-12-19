@@ -66,19 +66,18 @@ playBestWordAt (dictset, d:ds) s@(hand, board) (bword@(BWord word _ _), i)
 
 
 getOpenTiles :: Board -> [(BWord, Int)]
-getOpenTiles (Board bwords _) = [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
+getOpenTiles (Board bwords _) = 
+    [(word, i) | word@(BWord s _ _) <- bwords, i <- [0..length s - 1]]
 
--- Given a state finds all open tiles and the best word to play at each open tile. 
+playTurnSeq :: DictPair -> State -> [State]
+playTurnSeq dictpair state@(_, board) = 
+    mapMaybe (playBestWordAt dictpair state) openTiles
+        where openTiles = getOpenTiles board
+
 playTurnPar :: DictPair -> State -> [State]
 playTurnPar dictpair state@(_, board) = 
     catMaybes $ parMap rdeepseq (playBestWordAt dictpair state) openTiles
         where openTiles = getOpenTiles board
-
-playTurn :: DictPair -> State -> [State]
-playTurn dictpair state@(_, board) = 
-    mapMaybe (playBestWordAt dictpair state) openTiles
-        where openTiles = getOpenTiles board
-
 
 uniqueStates :: [State] -> [State]
 uniqueStates = nubBy (\x y -> stateID x == stateID y)
@@ -94,10 +93,10 @@ bestStates stepsize states = take stepsize $
 bfsNextSeq :: DictPair -> [State] -> [State]
 bfsNextSeq dictpair states = do
     state <- states
-    playTurn dictpair state
+    playTurnSeq dictpair state
 
 bfsNextPar :: DictPair -> [State] -> [State]
-bfsNextPar dictpair states = concat $ parMap rdeepseq (playTurn dictpair) states
+bfsNextPar dictpair states = concat $ parMap rdeepseq (playTurnPar dictpair) states
 
 bfsLoop :: (DictPair -> [State] -> [State]) -> Int -> Int -> DictPair -> [State] -> Maybe State
 bfsLoop _ 0 _ _ _ = Nothing
