@@ -2,6 +2,10 @@ Main.hs - Just do IO related stuff and call stuff from src/
 
 Three .hs Files For src/:
 
+    Types.hs
+        custom datatypes
+    Hand.hs
+        functions for using a Hand of banagrams tiles
     BananaBoard.hs
         Functions to handle the game board matrix,
         such as placing a new word at a specific place,
@@ -13,9 +17,6 @@ Three .hs Files For src/:
         Dictionary filtering for words that can be built with 
             letters in hand
         Picking the best word to play from hand, etc
-    BananaSolve.hs
+    Bfs.hs
         The BFS algorithm that will solve a BananaBoard with a
         given hand
-
-TODO:
-1. Change the repo format to be stack based instead of cabal based
