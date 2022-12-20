@@ -7,7 +7,7 @@ module Bfs (
 import Data.Char (isAlpha)
 import Data.Maybe (fromJust, isJust, catMaybes, mapMaybe) 
 import Data.List (elemIndex, nubBy, sortBy)
-import Control.Parallel.Strategies (parMap, rdeepseq, parBuffer, withStrategy)
+import Control.Parallel.Strategies (parMap, rdeepseq)
 import BananaBoard
     ( singleton,
       joinWordAt)
@@ -76,9 +76,8 @@ playTurnSeq dictpair state@(_, board) =
 
 playTurnPar :: DictPair -> State -> [State]
 playTurnPar dictpair state@(_, board) = 
-    catMaybes $ withStrategy (parBuffer 100 rdeepseq) 
-        $ map (playBestWordAt dictpair state) 
-        $ getOpenTiles board 
+    catMaybes $ parMap rdeepseq (playBestWordAt dictpair state) 
+        $ getOpenTiles board
                 
 
 uniqueStates :: [State] -> [State]
