@@ -15,8 +15,10 @@ main = do
                 let algoType = case algo of "s" -> Just bfsSeq
                                             "p" -> Just bfsPar
                                             _ -> Nothing
-                if isNothing algoType then
-                    die $ "algo must be 's' for sequential or 'p' for parallel."
+                if isNothing algoType then do
+                    pn <- getProgName
+                    die $ "Usage: " ++ pn ++ "stack exec BananaSolver-exe -- +RTS -ls -N4 -- <algo> <tiles>\n" ++
+                         "algo must be 's' for sequential or 'p' for parallel."
                 else do
                     fcontents <- readFile "words.txt"
                     let ws = lines fcontents
@@ -25,7 +27,7 @@ main = do
                     putStrLn $ "Prompt: " ++ tiles
                     let lim = 20
                         stepsize = 20
-                        res = (fromJust algoType) tiles lim stepsize (dictset, dictlist)
+                        res = fromJust algoType tiles lim stepsize (dictset, dictlist)
                     case res of
                         Nothing -> putStrLn $ "no solution in " ++ show lim
                         Just state -> print state
@@ -33,4 +35,3 @@ main = do
             pn <- getProgName
             die $ "Usage: " ++ pn ++ "stack exec BananaSolver-exe -- +RTS -ls -N4 -- <algo> <tiles>"
     
-            
