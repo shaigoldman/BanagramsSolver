@@ -7,6 +7,13 @@ import System.Environment (getArgs, getProgName)
 import System.Exit(die)
 import Data.Maybe (isNothing, fromJust)
 
+usage :: IO ()
+usage = do
+    pn <- getProgName
+    die $ "Usage: stack exec " ++ pn ++ " -- +RTS -ls -N4 -- <algo> <tiles>\n" ++
+          "<algo> must be 's' for sequential or 'p' for parallel."
+
+
 main :: IO ()
 main = do
     args <- getArgs
@@ -15,10 +22,7 @@ main = do
                 let algoType = case algo of "s" -> Just bfsSeq
                                             "p" -> Just bfsPar
                                             _ -> Nothing
-                if isNothing algoType then do
-                    pn <- getProgName
-                    die $ "Usage: " ++ pn ++ "stack exec BananaSolver-exe -- +RTS -ls -N4 -- <algo> <tiles>\n" ++
-                         "algo must be 's' for sequential or 'p' for parallel."
+                if isNothing algoType then usage
                 else do
                     fcontents <- readFile "words.txt"
                     let ws = lines fcontents
@@ -31,7 +35,4 @@ main = do
                     case res of
                         Nothing -> putStrLn $ "no solution in " ++ show lim
                         Just state -> print state
-        _ -> do
-            pn <- getProgName
-            die $ "Usage: " ++ pn ++ "stack exec BananaSolver-exe -- +RTS -ls -N4 -- <algo> <tiles>"
-    
+        _ -> usage
