@@ -17,8 +17,6 @@ module Types (
     DictPair
 ) where
 
- 
-
 import Data.Set (Set)
 import Data.HashMap.Strict (HashMap)
 import Data.Matrix (Matrix, toList, setElem)

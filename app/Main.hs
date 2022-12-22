@@ -6,13 +6,13 @@ import Types (splitDict)
 import System.Environment (getArgs, getProgName)
 import System.Exit(die)
 import Data.Maybe (isNothing, fromJust)
+import Data.Char (isAlpha, toLower)
 
 usage :: IO ()
 usage = do
     pn <- getProgName
     die $ "Usage: stack exec " ++ pn ++ " -- +RTS -ls -N4 -- <algo> <tiles>\n" ++
-          "<algo> must be 's' for sequential or 'p' for parallel."
-
+          "<algo> must be 's' for sequential or 'p' for parallel. Tiles must be letters only."
 
 main :: IO ()
 main = do
@@ -23,16 +23,19 @@ main = do
                                             "p" -> Just bfsPar
                                             _ -> Nothing
                 if isNothing algoType then usage
-                else do
-                    fcontents <- readFile "words.txt"
-                    let ws = lines fcontents
-                        dictlist = splitDict ws
-                        dictset = Data.Set.fromList ws
-                    putStrLn $ "Prompt: " ++ tiles
-                    let lim = 20
-                        stepsize = 20
-                        res = fromJust algoType tiles lim stepsize (dictset, dictlist)
-                    case res of
-                        Nothing -> putStrLn $ "no solution in " ++ show lim
-                        Just state -> print state
+                else do 
+                    if any (not . isAlpha) tiles then usage
+                    else do
+                        let formattedTiles = map toLower tiles
+                        fcontents <- readFile "words.txt"
+                        let ws = lines fcontents
+                            dictlist = splitDict ws
+                            dictset = Data.Set.fromList ws
+                        putStrLn $ "Prompt: " ++ formattedTiles
+                        let lim = 20
+                            stepsize = 20
+                            res = fromJust algoType formattedTiles lim stepsize (dictset, dictlist)
+                        case res of
+                            Nothing -> putStrLn $ "no solution in " ++ show lim
+                            Just state -> print state
         _ -> usage
