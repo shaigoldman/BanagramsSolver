@@ -1,7 +1,7 @@
 # BanagramsSolver
 Shai Goldman and Aaron Priven's parallel haskell project for PFP fall 22
 
-dictionary from http://wordlist.sourceforge.net/
+Dictionary from http://wordlist.sourceforge.net/
 
 To build the project, run:
 
