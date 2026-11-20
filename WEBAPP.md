@@ -1,24 +1,25 @@
-# Banana Board web app
+# Banana Board
 
-A React + TypeScript interface backed by the original Haskell solver. Enter up to 25 English letters and select **Find my board** or press Enter. The server returns the solver's actual board. The search is bounded (20 iterations, 20 candidate states per iteration), so “couldn't find a board” doesn't prove no board exists. Each search has a 20-second timeout.
+The React/TypeScript app runs the original Haskell solver in the browser. The solver is compiled to WebAssembly and runs in a Web Worker, so the UI stays responsive and no backend is required. The dictionary and the compiled solver are served as static files. Nothing entered in the app is sent to a solver server.
 
-## Run with Docker
+The original search considers at most 20 candidate states over at most 20 iterations. A “couldn't find a board” message therefore does not prove no board exists. The app stops a search after 20 seconds and accepts up to 25 English letters.
 
-From the repository root:
+## Building
+
+The GitHub Actions workflow `.github/workflows/wasm-check.yml` installs GHC's WebAssembly toolchain, compiles the solver, runs a smoke test through the WASI compatibility layer, builds a static bundle, and deploys it to GitHub Pages. The Pages build needs the `/BanagramsSolver/` base path.
+
+To build locally, install the GHC WebAssembly toolchain from ghc-wasm-meta, Node.js, and npm. From the repository root:
 
 ```sh
-docker build -t banana-board .
-docker run --rm -p 8080:8080 banana-board
+# Isolate banana-wasm.cabal from the repository's other Cabal files in a temporary checkout.
+wasm32-wasi-cabal update
+wasm32-wasi-cabal build exe:banana-wasm
+mkdir -p web/public
+cp "$(wasm32-wasi-cabal list-bin exe:banana-wasm)" web/public/solver.wasm
+cp words.txt web/public/words.txt
+npm ci --prefix web
+node tests/wasm-smoke.mjs
+npm run build --prefix web -- --base=/BanagramsSolver/
 ```
 
-Visit http://localhost:8080. Run `python3 tests/smoke.py` while it is running for basic API checks. The container serves both frontend and API from one origin; no external API or secret is required.
-
-## Local development
-
-Install GHC/Cabal, Node 20, and the system dependencies needed to build the Haskell packages. Run `cabal update && cabal run exe:banana-web` from the repository root. In another terminal, run `cd web && npm install && npm run dev`. Vite proxies `/api` to port 8080. For a production-style local run, first build the frontend with `npm run build` in `web`.
-
-## Hosting
-
-`render.yaml` describes a Docker web service for Render. Connect this repository and deploy it as a Blueprint, or deploy the Dockerfile to another container host. The server listens on the host-provided `PORT`. The container is required: static-only hosting cannot run the Haskell backend. A small host may need additional memory for difficult searches; the limit and timeout can be adjusted in `server/Main.hs`.
-
-The original solver and dictionary remain unchanged. The API accepts `POST /api/solve` with `{"letters":"cat"}` and responds with a solved grid, `not_found`, or an error. `GET /api/health` is a health check.
+Use a local HTTP server to serve `web/dist` for testing; WebAssembly and Web Workers cannot reliably be loaded from a `file://` URL. The production build assumes the site's `/BanagramsSolver/` path.
