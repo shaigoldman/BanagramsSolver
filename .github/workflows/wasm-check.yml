@@ -1,0 +1,28 @@
+name: WebAssembly proof of concept
+on:
+  push:
+    branches: [codex/banana-board-wasm]
+  workflow_dispatch:
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install browser WASI shim
+        run: npm ci --prefix web
+      - name: Install GHC WebAssembly compiler
+        run: |
+          curl -fsSL https://gitlab.haskell.org/haskell-wasm/ghc-wasm-meta/-/raw/master/bootstrap.sh | FLAVOUR=9.10 sh
+          "$HOME/.ghc-wasm/add_to_github_path.sh"
+      - name: Build solver
+        run: |
+          wasm32-wasi-cabal update
+          wasm32-wasi-cabal build exe:banana-wasm
+          mkdir -p web/public
+          cp "$(wasm32-wasi-cabal list-bin exe:banana-wasm)" web/public/solver.wasm
+      - name: Run solver through WASI shim
+        run: node tests/wasm-smoke.mjs
