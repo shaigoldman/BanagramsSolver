@@ -2,14 +2,16 @@ import React, { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 
-type Result = {status: 'solved'; rows: string[]} | {status:'not_found'} | {error:string};
+type Result = {status: 'solved'; rows: string[]} | {status:'not_found'} | {status:'error'; error:string};
 function Tile({letter, index = 0}: {letter: string; index?:number}) {return <span className="tile" style={{animationDelay: `${Math.min(index * 25, 300)}ms`}}>{letter.toUpperCase()}</span>}
 function App(){
- const [letters,setLetters]=useState(''); const [rows,setRows]=useState<string[] | null>(null); const [loading,setLoading]=useState(false); const [message,setMessage]=useState(''); const input=useRef<HTMLInputElement>(null); const controller=useRef<AbortController | null>(null);
- const reset=()=>{controller.current?.abort(); controller.current=null; setLoading(false);setRows(null);setLetters('');setMessage('');setTimeout(()=>input.current?.focus(),0)};
- async function solve(e:React.FormEvent){e.preventDefault();if(!letters || loading)return;setMessage('');setLoading(true);const current=new AbortController();controller.current=current;
-  try { const response=await fetch('/api/solve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({letters}),signal:current.signal});const data:Result=await response.json(); if(!response.ok || 'error' in data){setMessage('error' in data?data.error:'Something went wrong. Please try again.');return} if(data.status==='not_found'){setMessage("We couldn't find a board for these letters. Try another combination.");return} if(!Array.isArray(data.rows) || !data.rows.length){setMessage('The solver returned an empty board. Please try again.');return} setRows(data.rows);
-  } catch(err){if(!(err instanceof DOMException && err.name==='AbortError'))setMessage('Could not reach the solver. Please try again.')} finally {if(controller.current===current){controller.current=null;setLoading(false)}}
+ const [letters,setLetters]=useState(''); const [rows,setRows]=useState<string[] | null>(null); const [loading,setLoading]=useState(false); const [message,setMessage]=useState(''); const input=useRef<HTMLInputElement>(null); const controller=useRef<Worker | null>(null);
+ const reset=()=>{controller.current?.terminate(); controller.current=null; setLoading(false);setRows(null);setLetters('');setMessage('');setTimeout(()=>input.current?.focus(),0)};
+ function solve(e:React.FormEvent){e.preventDefault();if(!letters || loading)return;setMessage('');setLoading(true);const worker=new Worker(new URL('./solver.worker.ts',import.meta.url),{type:'module'});controller.current=worker;
+  const timer=window.setTimeout(()=>{worker.terminate();if(controller.current===worker){controller.current=null;setLoading(false);setMessage('This search took too long. Try fewer letters.')}},20000);
+  worker.onmessage=(event:MessageEvent<Result>)=>{window.clearTimeout(timer);worker.terminate();if(controller.current!==worker)return;controller.current=null;setLoading(false);const data=event.data;if(data.status==='error'){setMessage(data.error);return}if(data.status==='not_found'){setMessage("We couldn't find a board for these letters. Try another combination.");return}if(!Array.isArray(data.rows)||!data.rows.length){setMessage('The solver returned an empty board. Please try again.');return}setRows(data.rows)};
+  worker.onerror=()=>{window.clearTimeout(timer);worker.terminate();if(controller.current===worker){controller.current=null;setLoading(false);setMessage('Could not run the solver. Please try again.')}};
+  worker.postMessage(letters);
  }
  const count=letters.length;
  return <div className="page"><header className="top"><a className="brand" href="/" aria-label="Banana Board home"><span className="brand-icon">✳</span><span>banana<span className="brand-light">board</span></span></a><span className="top-note">A LITTLE WORD MAGIC</span></header>
