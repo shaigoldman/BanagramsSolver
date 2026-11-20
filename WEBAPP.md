@@ -2,7 +2,7 @@
 
 The React/TypeScript app runs the original Haskell solver in the browser. The solver is compiled to WebAssembly and runs in a Web Worker, so the UI stays responsive and no backend is required. The dictionary and the compiled solver are served as static files. Nothing entered in the app is sent to a solver server.
 
-The original search considers at most 20 candidate states over at most 20 iterations. A “couldn't find a board” message therefore does not prove no board exists. The app stops a search after 20 seconds and accepts up to 25 English letters.
+The original search considers at most 20 candidate states over at most 20 iterations. A “couldn't find a board” message therefore does not prove no board exists. There is no input length limit or automatic time limit. The search runs in a worker that can be stopped by the user. Progress reports the actual search round and elapsed time; round lengths vary, so it is not an estimate of time remaining.
 
 ## Building
 
