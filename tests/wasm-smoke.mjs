@@ -13,6 +13,8 @@ async function solve(letters) {
 }
 const solved=await solve('cat');
 if(solved.status!=='solved'||solved.rows.join('').replaceAll(' ','').split('').sort().join('')!=='act')throw Error(JSON.stringify(solved));
+const multi=await solve('stonecats');
+if(multi.status!=='solved' || multi.rows.length < 2 || multi.rows.join('').replaceAll(' ','').split('').sort().join('') !== 'stonecats'.split('').sort().join('')) throw Error(JSON.stringify(multi));
 const notFound=await solve('zzzz');
 if(notFound.status!=='not_found')throw Error(JSON.stringify(notFound));
 console.log('WASM solver checks passed');

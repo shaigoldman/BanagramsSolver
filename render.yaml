@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: banana-board
-    runtime: docker
-    plan: free
-    healthCheckPath: /api/health
