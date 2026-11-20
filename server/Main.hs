@@ -6,7 +6,7 @@ import Bfs (bfsSeq)
 import Types (Board(..), OMatrix(..), splitDict)
 import Control.DeepSeq (force)
 import Control.Exception (evaluate)
-import Data.Aeson (FromJSON, object, (.=))
+import Data.Aeson (FromJSON, decode, object, (.=))
 import Data.Char (toLower)
 import Data.Matrix (toLists)
 import qualified Data.Set as Set
@@ -33,7 +33,7 @@ main = do
     middleware $ staticPolicy (addBase "web/dist")
     get "/api/health" $ json (object ["status" .= ("ok" :: String)])
     post "/api/solve" $ do
-      req <- (Just <$> jsonData) `rescue` (\_ -> pure Nothing)
+      req <- decode <$> body
       case req of
         Nothing -> status badRequest400 >> json (object ["error" .= ("Please provide letters in JSON." :: String)])
         Just (SolveRequest input) -> do
