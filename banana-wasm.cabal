@@ -1,0 +1,11 @@
+cabal-version: 2.4
+name: banana-wasm
+version: 0.1.0.0
+build-type: Simple
+executable banana-wasm
+  main-is: Main.hs
+  hs-source-dirs: wasm, src
+  other-modules: BananaBoard, Bfs, Hand, Types, WordChooser
+  default-language: Haskell2010
+  ghc-options: -O2
+  build-depends: base >=4.14 && <5, containers, deepseq, matrix, parallel, unordered-containers

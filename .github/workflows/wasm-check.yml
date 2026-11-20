@@ -1,0 +1,65 @@
+name: WebAssembly proof of concept
+on:
+  push:
+    branches: [main, codex/banana-board-wasm]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install browser WASI shim
+        run: npm ci --prefix web
+      - name: Install GHC WebAssembly compiler
+        run: |
+          curl -fsSL https://gitlab.haskell.org/haskell-wasm/ghc-wasm-meta/-/raw/master/bootstrap.sh | FLAVOUR=9.10 sh
+          "$HOME/.ghc-wasm/add_to_github_path.sh"
+      - name: Build solver
+        run: |
+          rm -f BananaSolver.cabal banana-web.cabal
+          wasm32-wasi-cabal update
+          wasm32-wasi-cabal build exe:banana-wasm
+          mkdir -p web/public
+          cp "$(wasm32-wasi-cabal list-bin exe:banana-wasm)" web/public/solver.wasm
+      - name: Run solver through WASI shim
+        run: node tests/wasm-smoke.mjs
+      - name: Save compiled solver
+        uses: actions/upload-artifact@v4
+        with:
+          name: banana-solver-wasm
+          path: web/public/solver.wasm
+          retention-days: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build static site
+        run: |
+          cp words.txt web/public/words.txt
+          npm run build --prefix web -- --base=/BanagramsSolver/
+      - name: Upload static site for verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: banana-board-pages
+          path: web/dist
+          retention-days: 1
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
