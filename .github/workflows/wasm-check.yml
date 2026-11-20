@@ -2,6 +2,7 @@ name: Build and deploy Banana Board
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
@@ -46,6 +47,7 @@ jobs:
         with:
           path: web/dist
   deploy:
+    if: github.event_name != 'pull_request'
     needs: wasm
     runs-on: ubuntu-latest
     environment:

@@ -1,12 +1,13 @@
 module Bfs (
     playFirstTurn,
     bfsSeq,
+    bfsSeqProgress,
     bfsPar
 ) where
 
 import Data.Char (isAlpha)
 import Data.Maybe (fromJust, isJust, catMaybes, mapMaybe) 
-import Data.List (elemIndex, nubBy, sortBy)
+import Data.List (elemIndex, find, nubBy, sortBy)
 import Control.Parallel.Strategies (parMap, rdeepseq)
 import BananaBoard
     ( singleton,
@@ -124,3 +125,18 @@ bfsSeq :: String -> Int -> Int -> DictPair -> Maybe State
 bfsSeq = runBfs bfsNextSeq
 bfsPar :: String -> Int -> Int -> DictPair -> Maybe State
 bfsPar = runBfs bfsNextPar
+
+-- Report each actual beam-search round before evaluating its candidate states.
+bfsSeqProgress :: (Int -> Int -> IO ()) -> String -> Int -> Int -> DictPair -> IO (Maybe State)
+bfsSeqProgress report handstring lim stepsize dictpair@(_, dictlist) =
+    loop 1 (playFirstTurn (toHand handstring) dictlist)
+  where
+    loop n states
+      | n > lim = pure Nothing
+      | otherwise = do
+          report n lim
+          case states of
+            [] -> pure Nothing
+            _ -> case find (null . fst) states of
+              Just solved -> pure (Just solved)
+              Nothing -> loop (n + 1) $ (bestStates stepsize . uniqueStates . bfsNextSeq dictpair) states
