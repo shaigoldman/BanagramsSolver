@@ -27,6 +27,15 @@ jobs:
           cp "$(wasm32-wasi-cabal list-bin exe:banana-wasm)" web/public/solver.wasm
       - name: Run solver through WASI shim
         run: node tests/wasm-smoke.mjs
+      - name: Save compiled solver
+        uses: actions/upload-artifact@v4
+        with:
+          name: banana-solver-wasm
+          path: web/public/solver.wasm
+          retention-days: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Build static site
         run: |
           cp words.txt web/public/words.txt
