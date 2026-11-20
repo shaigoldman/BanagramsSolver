@@ -1,0 +1,12 @@
+cabal-version: 2.4
+name: banana-web
+version: 0.1.0.0
+build-type: Simple
+
+executable banana-web
+  main-is: Main.hs
+  hs-source-dirs: server, src
+  other-modules: BananaBoard, Bfs, Hand, Types, WordChooser
+  default-language: Haskell2010
+  ghc-options: -O2 -threaded -rtsopts
+  build-depends: base >=4.14 && <5, aeson, containers, deepseq, matrix, parallel, scotty >=0.12 && <0.21, text, unordered-containers, wai, wai-middleware-static, http-types
