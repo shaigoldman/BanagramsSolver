@@ -30,7 +30,7 @@ jobs:
           "$HOME/.ghc-wasm/add_to_github_path.sh"
       - name: Build solver
         run: |
-          rm BananaSolver.cabal banana-web.cabal
+          rm -f BananaSolver.cabal banana-web.cabal
           wasm32-wasi-cabal update
           wasm32-wasi-cabal build exe:banana-wasm
           mkdir -p web/public
