@@ -1,7 +1,7 @@
-name: WebAssembly proof of concept
+name: Build and deploy Banana Board
 on:
   push:
-    branches: [main, codex/banana-board-wasm]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,9 +13,6 @@ concurrency:
 jobs:
   wasm:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -37,12 +34,6 @@ jobs:
           cp "$(wasm32-wasi-cabal list-bin exe:banana-wasm)" web/public/solver.wasm
       - name: Run solver through WASI shim
         run: node tests/wasm-smoke.mjs
-      - name: Save compiled solver
-        uses: actions/upload-artifact@v4
-        with:
-          name: banana-solver-wasm
-          path: web/public/solver.wasm
-          retention-days: 1
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -50,16 +41,17 @@ jobs:
         run: |
           cp words.txt web/public/words.txt
           npm run build --prefix web -- --base=/BanagramsSolver/
-      - name: Upload static site for verification
-        uses: actions/upload-artifact@v4
-        with:
-          name: banana-board-pages
-          path: web/dist
-          retention-days: 1
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist
+  deploy:
+    needs: wasm
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
