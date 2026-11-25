@@ -3,9 +3,9 @@ import { WASI, File, OpenFile, ConsoleStdout, PreopenDirectory } from '../web/no
 const bytes=await readFile('web/public/solver.wasm');
 const words=await readFile('words.txt');
 const module=await WebAssembly.compile(bytes);
-async function solve(letters, baseline = false, config = null) {
+async function solve(letters, baseline = false, config = null, fallback = false) {
   let output=''; const progress=[];
-  const args = config ? ['solver','--tuned',String(config.length),String(config.rounds),String(config.beam),JSON.stringify(config.weights),letters] : baseline ? ['solver','--baseline',letters] : ['solver',letters];
+  const args = fallback ? ['solver','--fallback',letters] : config ? ['solver','--tuned',String(config.length),String(config.rounds),String(config.beam),JSON.stringify(config.weights),letters] : baseline ? ['solver','--baseline',letters] : ['solver',letters];
   const wasi=new WASI(args,[],[new OpenFile(new File([])),ConsoleStdout.lineBuffered(s=>{output+=s}),ConsoleStdout.lineBuffered(s=>{if(s.startsWith('PROGRESS '))progress.push(s);else console.error(s)}),new PreopenDirectory('.', new Map([['words.txt',new File(words)]]))]);
   const instance=await WebAssembly.instantiate(module, {wasi_snapshot_preview1:wasi.wasiImport});
   const exit=wasi.start(instance);
@@ -63,13 +63,12 @@ function boardStats(result){
 }
 async function run(letters,mode){
  const start=performance.now();
- const first=await solve(letters,true);let result=first.result,rounds=first.progress.length,usedFallback=false;
- if(mode==='fallback' && result.status==='not_found'){
-  usedFallback=true;const next=await solve(letters,false,wide);result=next.result;rounds+=next.progress.length;
- }
+ const {result,progress}=await solve(letters,mode==='baseline',null,mode==='fallback');
  validate(letters,result);
- return {mode,status:result.status,seconds:(performance.now()-start)/1000,rounds,usedFallback,...boardStats(result)};
+ const usedFallback=progress.filter(p=>/^PROGRESS 1 /.test(p)).length>1;
+ return {mode,status:result.status,seconds:(performance.now()-start)/1000,rounds:progress.length,usedFallback,...boardStats(result)};
 }
+
 console.log('BENCH_CASES',JSON.stringify(cases));
 const records=[];
 for(let i=0;i<cases.length;i++){
