@@ -2,12 +2,31 @@ plugins { id 'com.android.application' }
 
 android {
     namespace 'com.shaigoldman.bananaboard'
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
         applicationId 'com.shaigoldman.bananaboard'
         minSdk 26
-        targetSdk 35
+        targetSdk 36
         versionCode 1
         versionName '1.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 }
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:core:1.6.1'
+}
+
+tasks.register('verifyBundledSite') {
+    doLast {
+        ['index.html', 'solver.wasm', 'words.txt'].each { filename ->
+            if (!file("src/main/assets/www/${filename}").isFile()) {
+                throw new GradleException("Missing ${filename}; build and bundle the website first (see android/README.md).")
+            }
+        }
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'verifyBundledSite' }
