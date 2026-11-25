@@ -1,7 +1,7 @@
 module Main (main) where
 import Bfs (bfsSeqProgress)
 import MixedSearch (bfsSeqTunedProgress)
-import FallbackSearch (SearchStage(..), fallbackProgress)
+import FallbackSearch (SearchStage(..), fallbackProgress, fallbackOnlyProgress)
 import Types (Board(..), OMatrix(..), splitDict)
 import Data.Char (toLower)
 import Data.List (isPrefixOf)
@@ -29,6 +29,7 @@ normalMain args = do
   let parsed = case args of
         ["--baseline", input] -> Just (\r -> bfsSeqProgress (r Initial), 20, 20, input)
         ["--fallback", input] -> Just (fallbackProgress, 20, 20, input)
+        ["--fallback-only", input] -> Just (\r text lim _ dict -> fallbackOnlyProgress r text lim dict, 20, 20, input)
         ["--tuned", lengthArg, roundsArg, beamArg, weightsArg, input] -> do
           lengthWeight <- readMaybe lengthArg
           rounds <- readMaybe roundsArg

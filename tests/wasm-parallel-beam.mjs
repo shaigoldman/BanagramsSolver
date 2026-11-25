@@ -51,10 +51,14 @@ if(!isMainThread){
   }finally{await Promise.all(workers.map(w=>w.worker.terminate()))}
  }
  console.log('PARALLEL_BEAM_CPUS',availableParallelism());
- for(const letters of ['stonecats','obqsyerepvkfieujn','dadadadadadadadad']){
+ for(const letters of ['stonecats','cat','abcdefg','obqsyerepvkfieujn','dadadadadadadadad']){
   const t0=performance.now(), sequential=await run(['--baseline',letters]), t1=performance.now();
   const parallel=await distributed(letters,2), t2=performance.now();
   if(JSON.stringify(sequential)!==JSON.stringify(parallel))throw Error('Parallel result differs for '+letters+': '+JSON.stringify({sequential,parallel}));
   console.log('PARALLEL_BEAM_RESULT',JSON.stringify({letters,status:sequential.status,sequentialSeconds:(t1-t0)/1000,parallelSeconds:(t2-t1)/1000,rows:parallel.rows??[]}));
+  if (sequential.status==='not_found') {
+    const afterParallel=await run(['--fallback-only',letters]), whole=await run([letters]);
+    if(JSON.stringify(afterParallel)!==JSON.stringify(whole))throw Error('Fallback-only differs for '+letters);
+  }
  }
 }
