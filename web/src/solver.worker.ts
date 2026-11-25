@@ -4,6 +4,8 @@ type BoardState={wire:string;done:boolean;rows:string[]};
 type Reply={states:BoardState[]};
 type Result={status:'solved';rows:string[]}|{status:'not_found'};
 type Progress={status:'progress';phase:'searching';stage:'initial'|'fallback';round:number;total:number};
+// Provisional threshold from a small WASI benchmark; see WEBAPP.md.
+const MIN_PARALLEL_TILES=14;
 let clients:Client[]=[];
 let cancelled=false;
 let nextId=0;
@@ -86,7 +88,7 @@ self.onmessage=async (event:MessageEvent<string>)=>{
   const letters=event.data.toLowerCase();
   let result:Result;
   const count=Math.min(2,navigator.hardwareConcurrency || 1);
-  if(count<2 || typeof Worker==='undefined'){
+  if(letters.length<MIN_PARALLEL_TILES || count<2 || typeof Worker==='undefined'){
    result=await sequential(module,words,letters);
   }else{
    try{
