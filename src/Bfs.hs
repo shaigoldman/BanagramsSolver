@@ -2,6 +2,7 @@ module Bfs (
     playFirstTurn,
     bfsSeq,
     bfsSeqProgress,
+    bfsSeqMixedProgress,
     bfsPar
 ) where
 
@@ -140,3 +141,23 @@ bfsSeqProgress report handstring lim stepsize dictpair@(_, dictlist) =
             _ -> case find (null . fst) states of
               Just solved -> pure (Just solved)
               Nothing -> loop (n + 1) $ (bestStates stepsize . uniqueStates . bfsNextSeq dictpair) states
+
+-- Mixed length/rarity experiment: consider all word lengths together and
+-- cap the initial states using the same beam width as subsequent rounds.
+bfsSeqMixedProgress :: (Int -> Int -> IO ()) -> String -> Int -> Int -> DictPair -> IO (Maybe State)
+bfsSeqMixedProgress report handstring lim stepsize (dictset, dictlist) =
+    loop 1 initial
+  where
+    allWords = concat dictlist
+    mixedDict = (dictset, [allWords])
+    initial = take stepsize $ map (\(w,h) -> (h, singleton w)) $
+        sortWHPairs $ buildWords (toHand handstring) allWords
+    loop n states
+      | n > lim = pure Nothing
+      | otherwise = do
+          report n lim
+          case states of
+            [] -> pure Nothing
+            _ -> case find (null . fst) states of
+              Just solved -> pure (Just solved)
+              Nothing -> loop (n + 1) $ (bestStates stepsize . uniqueStates . bfsNextSeq mixedDict) states
