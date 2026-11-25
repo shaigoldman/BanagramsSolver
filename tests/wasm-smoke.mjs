@@ -48,18 +48,27 @@ function validate(letters, result) {
 const baseWeights=[6833,13508,12218,10747,2298,12772,12985,8906,8034,14847,14228,10975,12594,8251,7493,13071,14905,9013,8673,5944,12242,14022,12640,14850,13026,14926];
 const standard={length:15000,rounds:20,beam:20,weights:baseWeights};
 const rareWeights=baseWeights.map((v,i)=>v+([9,16,23,25].includes(i)?8000:0));
-const configs=[
-  {name:'mixed',...standard},
-  {name:'shorter',...standard,length:7500},
-  {name:'rare',...standard,weights:rareWeights},
-  {name:'wide',...standard,beam:35},
-  {name:'longer_search',...standard,rounds:30}
-];
+// Shared class weights: vowels are the zero anchor because adding the
+// same constant to every letter is equivalent to changing length weight.
+const alphabet='abcdefghijklmnopqrstuvwxyz';
+const groupWeights=(common,other,rare)=>[...alphabet].map(c=>
+  'aeiou'.includes(c)?0:'lnrst'.includes(c)?common:'jkqxz'.includes(c)?rare:other);
+let seed=20261127;
+function randomInt(n){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return Math.floor(seed / 4294967296 * n)}
+const classCandidates=Array.from({length:8},(_,i)=>({
+  name:'class_'+(i+1),
+  length:10000+randomInt(4)*5000,
+  rounds:[15,20,30][randomInt(3)],
+  beam:[15,20,35][randomInt(3)],
+  weights:groupWeights(randomInt(4)*2000,4000+randomInt(5)*2000,8000+randomInt(7)*2000)
+}));
+const configs=[{name:'mixed',...standard},...classCandidates];
+console.log('TUNING_CONFIGS',JSON.stringify(configs));
 const defaultCheck=(await solve('stonecats')).result;
 const tunedCheck=(await solve('stonecats',false,standard)).result;
 if(JSON.stringify(defaultCheck)!==JSON.stringify(tunedCheck)) throw Error('Default tuned configuration differs from mixed solver');
 const train=['tsadmnimeroiyexrq','oohudieorjwojarma','ftogeiotrssdswaua','whxzdrluetrnrekmi','foiueioyvplasesos','yslearavneesidela','batazbejgvhwecusk','nkbaowxnaysolcidq','teendtugaamxateyy','rditgtmyizeptlgxo'];
-const heldout=['einleiwlsreniriia','onterebdsaatfetcm','trsefedeytgaudoxu','eqtzrsotaeggnsdee','amatnfixkrnrhmanr','doaelxvutoepagbvi','gltededtvxvbxolvo','oteuzosesafrevbax','yuaeoxnsotoksnedw','euuvoniakuiusdtia'];
+const heldout=['ajnxeelqikdetahau','eabsvyltawiufpier','uetilwekdndtfdcaa','milnsiiadnetwvtfr','ijenaldgbzikrmbtl','keqqmcxtareenoest','sywsnpeaugvliiutd','devctelleiosxznnz','vsaguweiieaeeedyc','ttenloeaebasarlrs'];
 function boardStats(result) {
  if(result.status!=='solved')return null;
  const rows=result.rows,width=Math.max(...rows.map(r=>r.length));
