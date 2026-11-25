@@ -39,6 +39,7 @@ if(!isMainThread){
     if(!states.length)return {status:'not_found'};
     const found=states.find(s=>s.done);
     if(found)return {status:'solved',rows:found.rows};
+    if(round===20)break;
     const batches=workers.map((w,i)=>{
       const start=Math.floor(i*states.length/workers.length),end=Math.floor((i+1)*states.length/workers.length);
       return states.slice(start,end).map(s=>s.wire);

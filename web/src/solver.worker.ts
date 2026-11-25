@@ -24,7 +24,9 @@ class Client {
     this.pending.delete(msg.id);
     if(msg.type==='error')pending.reject(new Error(msg.error));else pending.resolve(msg.result);
    };
-   this.worker.onerror=()=>{const error=new Error('Parallel worker failed');reject(error);for(const p of this.pending.values())p.reject(error);this.pending.clear()};
+   const fail=()=>{const error=new Error('Parallel worker failed');reject(error);for(const p of this.pending.values())p.reject(error);this.pending.clear()};
+   this.worker.onerror=fail;
+   this.worker.onmessageerror=fail;
    this.worker.postMessage({type:'init',module,words});
   });
  }
@@ -57,6 +59,7 @@ async function distributed(letters:string):Promise<Result>{
   if(!states.length)break;
   const solved=states.find(s=>s.done);
   if(solved)return {status:'solved',rows:solved.rows};
+  if(round===20)break;
   const batches=clients.map((_,i)=>{
    const start=Math.floor(i*states.length/clients.length),end=Math.floor((i+1)*states.length/clients.length);
    return states.slice(start,end).map(s=>s.wire);
