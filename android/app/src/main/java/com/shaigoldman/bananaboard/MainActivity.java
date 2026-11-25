@@ -15,7 +15,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
-    private static final String SITE = "https://appassets.androidplatform.net/assets/www/";
+    private static final String ROOT = "https://appassets.androidplatform.net/assets/www/";
+    private static final String SITE = ROOT + "index.html";
     private WebView webView;
 
     @Override public void onCreate(Bundle state) {
@@ -44,7 +45,9 @@ public class MainActivity extends Activity {
             .build();
         webView.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return loader.shouldInterceptRequest(request.getUrl());
+                Uri uri = request.getUrl();
+                if (ROOT.equals(uri.toString())) uri = Uri.parse(SITE);
+                return loader.shouldInterceptRequest(uri);
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
