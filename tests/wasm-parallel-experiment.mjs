@@ -60,6 +60,7 @@ if (!isMainThread) {
     if(visited.size!==cells.size)throw Error('Disconnected board');
   }
   console.log('PARALLEL_WORKER_BENCHMARK CPUs',availableParallelism());
+  console.log('PARALLEL_METHOD one measured run per strategy; separate WASM instances; baseline result takes priority');
   for (const [index,letters] of ['stonecats','obqsyerepvkfieujn','dadadadadadadadad'].entries()) {
     for(const mode of (index%2?['parallel','serial']:['serial','parallel'])) {
       const t=performance.now();
