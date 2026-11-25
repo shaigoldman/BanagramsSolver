@@ -35,6 +35,11 @@ jobs:
           mkdir -p web/public android/app/src/main/assets/www
           cp "$(wasm32-wasi-cabal list-bin exe:banana-wasm)" web/public/solver.wasm
           cp words.txt web/public/words.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build and copy Android web assets
+        run: |
           npm run build --prefix web -- --base=/assets/www/
           cp -R web/dist/. android/app/src/main/assets/www/
       - uses: gradle/actions/setup-gradle@v4
