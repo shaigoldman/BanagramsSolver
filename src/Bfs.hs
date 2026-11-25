@@ -2,6 +2,11 @@ module Bfs (
     playFirstTurn,
     bfsSeq,
     bfsSeqProgress,
+    playBestWordAtWith,
+    getOpenTiles,
+    uniqueStates,
+    bestStates,
+    bfsNextSeq,
     bfsPar
 ) where
 
@@ -42,13 +47,16 @@ playFirstTurn hand (d:ds)
           bests = sortWHPairs $ buildWords hand d
 
 playBestWordAt :: DictPair -> State -> (BWord, Int) -> Maybe State
-playBestWordAt (_, []) _ _ = Nothing
-playBestWordAt (dictset, d:ds) s@(hand, board) (bword@(BWord word _ _), i)
+playBestWordAt = playBestWordAtWith sortWHPairs
+
+playBestWordAtWith :: ([(String, Hand)] -> [(String, Hand)]) -> DictPair -> State -> (BWord, Int) -> Maybe State
+playBestWordAtWith _ (_, []) _ _ = Nothing
+playBestWordAtWith order (dictset, d:ds) s@(hand, board) (bword@(BWord word _ _), i)
     | isJust best = best
-    | otherwise = playBestWordAt (dictset, ds) s (bword, i) 
+    | otherwise = playBestWordAtWith order (dictset, ds) s (bword, i) 
     where
         c = word !! i
-        bests = sortWHPairs $ buildWords (addTile c hand) $ wordsWithChar c d
+        bests = order $ buildWords (addTile c hand) $ wordsWithChar c d
         best = joinBestWord bests
 
         joinBestWord :: [(String, Hand)] -> Maybe State
@@ -140,3 +148,4 @@ bfsSeqProgress report handstring lim stepsize dictpair@(_, dictlist) =
             _ -> case find (null . fst) states of
               Just solved -> pure (Just solved)
               Nothing -> loop (n + 1) $ (bestStates stepsize . uniqueStates . bfsNextSeq dictpair) states
+

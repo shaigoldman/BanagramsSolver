@@ -1,8 +1,8 @@
 # Banana Board
 
-The React/TypeScript app runs the original Haskell solver in the browser. The solver is compiled to WebAssembly and runs in a Web Worker, so the UI stays responsive and no backend is required. The dictionary and the compiled solver are served as static files. Nothing entered in the app is sent to a solver server.
+The React/TypeScript app runs the Haskell solver in the browser. The solver is compiled to WebAssembly and runs in a Web Worker, so the UI stays responsive and no backend is required. The dictionary and the compiled solver are served as static files. Nothing entered in the app is sent to a solver server.
 
-The original search considers at most 20 candidate states over at most 20 iterations. A “couldn't find a board” message therefore does not prove no board exists. There is no input length limit or automatic time limit. The search runs in a worker that can be stopped by the user. Progress reports the actual search round and elapsed time; round lengths vary, so it is not an estimate of time remaining.
+The app first runs the original search with up to 20 candidate states and 20 rounds. If it fails and every tile can appear in a dictionary word, it tries a mixed-scoring search with up to 35 states and 20 rounds. Progress identifies the current search and the result counts rounds from both stages. A “couldn't find a board” message therefore does not prove no board exists. There is no input length limit or automatic time limit. The search runs in a worker that can be stopped by the user. Progress reports the actual search round and elapsed time; round lengths vary, so it is not an estimate of time remaining.
 
 ## Building
 
@@ -19,6 +19,8 @@ cp "$(wasm32-wasi-cabal list-bin exe:banana-wasm)" web/public/solver.wasm
 cp words.txt web/public/words.txt
 npm ci --prefix web
 node tests/wasm-smoke.mjs
+# Optional longer search comparison:
+node tests/wasm-search-research.mjs
 npm run build --prefix web -- --base=/BanagramsSolver/
 ```
 

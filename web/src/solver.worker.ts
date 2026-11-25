@@ -11,8 +11,8 @@ self.onmessage = async (event: MessageEvent<string>) => {
       new OpenFile(new File([])),
       ConsoleStdout.lineBuffered((line: string) => { output += line; }),
       ConsoleStdout.lineBuffered((line: string) => {
-        const progress = /^PROGRESS (\d+) (\d+)$/.exec(line);
-        if (progress) self.postMessage({ status: 'progress', phase: 'searching', round: Number(progress[1]), total: Number(progress[2]) });
+        const progress = /^PROGRESS (initial|fallback) (\d+) (\d+)$/.exec(line);
+        if (progress) self.postMessage({ status: 'progress', phase: 'searching', stage: progress[1], round: Number(progress[2]), total: Number(progress[3]) });
         else errors += line;
       }),
       new PreopenDirectory('.', new Map([['words.txt', new File(new Uint8Array(words))]])),
