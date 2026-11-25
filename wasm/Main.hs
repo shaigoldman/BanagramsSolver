@@ -1,9 +1,11 @@
 module Main (main) where
 import Bfs (bfsSeqProgress)
 import MixedSearch (bfsSeqTunedProgress)
-import FallbackSearch (SearchStage(..), fallbackProgress)
+import FallbackSearch (SearchStage(..), fallbackProgress, fallbackOnlyProgress)
 import Types (Board(..), OMatrix(..), splitDict)
 import Data.Char (toLower)
+import Data.List (isPrefixOf)
+import ParallelWasm (parallelCommand)
 import Data.Matrix (toLists)
 import qualified Data.Set as Set
 import System.Environment (getArgs)
@@ -13,9 +15,21 @@ import System.IO (hPutStrLn, hFlush, stderr)
 main :: IO ()
 main = do
   args <- getArgs
+  case args of
+    (mode:_) | "--parallel-" `isPrefixOf` mode -> do
+      ws <- lines <$> readFile "words.txt"
+      let dict = (Set.fromList ws, splitDict ws)
+      case parallelCommand dict args of
+        Just output -> putStrLn output
+        Nothing -> putStrLn "{\"status\":\"error\",\"error\":\"Invalid parallel task.\"}"
+    _ -> normalMain args
+
+normalMain :: [String] -> IO ()
+normalMain args = do
   let parsed = case args of
         ["--baseline", input] -> Just (\r -> bfsSeqProgress (r Initial), 20, 20, input)
         ["--fallback", input] -> Just (fallbackProgress, 20, 20, input)
+        ["--fallback-only", input] -> Just (\r text lim _ dict -> fallbackOnlyProgress r text lim dict, 20, 20, input)
         ["--tuned", lengthArg, roundsArg, beamArg, weightsArg, input] -> do
           lengthWeight <- readMaybe lengthArg
           rounds <- readMaybe roundsArg
