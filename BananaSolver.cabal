@@ -27,7 +27,9 @@ library
   exposed-modules:
       BananaBoard
       Bfs
+      FallbackSearch
       Hand
+      MixedSearch
       Types
       WordChooser
   other-modules:

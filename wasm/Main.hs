@@ -1,10 +1,9 @@
 module Main (main) where
-import Bfs (bfsSeqProgress, bfsSeqMixedProgress, bfsSeqTunedProgress)
+import Bfs (bfsSeqProgress)
+import MixedSearch (bfsSeqTunedProgress)
+import FallbackSearch (SearchStage(..), fallbackProgress)
 import Types (Board(..), OMatrix(..), splitDict)
 import Data.Char (toLower)
-import Data.List (nub)
-import Hand (toHand)
-import WordChooser (buildWords)
 import Data.Matrix (toLists)
 import qualified Data.Set as Set
 import System.Environment (getArgs)
@@ -15,7 +14,7 @@ main :: IO ()
 main = do
   args <- getArgs
   let parsed = case args of
-        ["--baseline", input] -> Just (bfsSeqProgress, 20, 20, input)
+        ["--baseline", input] -> Just (\r -> bfsSeqProgress (r Initial), 20, 20, input)
         ["--fallback", input] -> Just (fallbackProgress, 20, 20, input)
         ["--tuned", lengthArg, roundsArg, beamArg, weightsArg, input] -> do
           lengthWeight <- readMaybe lengthArg
@@ -23,9 +22,9 @@ main = do
           beam <- readMaybe beamArg
           weights <- readMaybe weightsArg
           if length weights == 26 && lengthWeight >= 0 && rounds > 0 && beam > 0
-            then Just (bfsSeqTunedProgress lengthWeight weights, rounds, beam, input)
+            then Just (\r -> bfsSeqTunedProgress lengthWeight weights (r Initial), rounds, beam, input)
             else Nothing
-        [input] -> Just (bfsSeqMixedProgress, 20, 20, input)
+        [input] -> Just (fallbackProgress, 20, 20, input)
         _ -> Nothing
   case parsed of
     Just (algorithm, rounds, beam, input) | not (null input) && all (\c -> c >= 'a' && c <= 'z') (map toLower input) -> do
@@ -37,20 +36,10 @@ main = do
         Just (_, Board _ (OMatrix _ m)) -> putStrLn $ "{\"status\":\"solved\",\"rows\":" ++ show (toLists m) ++ "}"
     _ -> putStrLn "{\"status\":\"error\",\"error\":\"Enter one or more letters.\"}"
 
-report :: Int -> Int -> IO ()
-report roundNumber total = do
-  hPutStrLn stderr $ "PROGRESS " ++ show roundNumber ++ " " ++ show total
+report :: SearchStage -> Int -> Int -> IO ()
+report stage roundNumber total = do
+  let label = case stage of
+        Initial -> "initial"
+        Fallback -> "fallback"
+  hPutStrLn stderr $ "PROGRESS " ++ label ++ " " ++ show roundNumber ++ " " ++ show total
   hFlush stderr
-
--- Run the existing search first. Only retry if every letter can occur in a
--- multi-letter word constructible from the entire hand. For a connected board
--- with multiple tiles this is a necessary, not sufficient, condition.
-fallbackProgress report input lim width dict@(_, dictlist) = do
-  first <- bfsSeqProgress report input lim width dict
-  case first of
-    Just solved -> pure (Just solved)
-    Nothing ->
-      let playable = concatMap fst $ buildWords (toHand input) (concat dictlist)
-          impossible = length input > 1 && any (`notElem` playable) (nub input)
-      in if impossible then pure Nothing
-         else bfsSeqMixedProgress report input lim 35 dict

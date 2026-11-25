@@ -13,7 +13,7 @@ async function solve(letters, baseline = false, config = null, fallback = false)
   return { result: JSON.parse(output), progress };
 }
 const {result:solved,progress} = await solve('cat');
-if (!progress.some(line=>/^PROGRESS 1 20$/.test(line))) throw Error('Missing search progress');
+if (!progress.some(line=>/^PROGRESS initial 1 20$/.test(line))) throw Error('Missing search progress');
 if(solved.status!=='solved'||solved.rows.join('').replaceAll(' ','').split('').sort().join('')!=='act')throw Error(JSON.stringify(solved));
 const {result:multi}=await solve('stonecats');
 if(multi.status!=='solved' || multi.rows.length < 2 || multi.rows.join('').replaceAll(' ','').split('').sort().join('') !== 'stonecats'.split('').sort().join('')) throw Error(JSON.stringify(multi));
