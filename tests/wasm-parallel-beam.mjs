@@ -52,7 +52,7 @@ if(!isMainThread){
   }finally{await Promise.all(workers.map(w=>w.worker.terminate()))}
  }
  console.log('PARALLEL_BEAM_CPUS',availableParallelism());
- for(const letters of ['stonecats','cat','abcdefg','obqsyerepvkfieujn','dadadadadadadadad']){
+ for(const letters of ['stonecats','cat','abcdefg','luszmetawter','enamtsgkiosv','lyiaeweyjupi','uuiniaagctqgiatpf','boulwfylsnkatgczl','tlyboaldioioertsaeidh','sdelpefeaeibatefteiii','obqsyerepvkfieujn','dadadadadadadadad']){
   const t0=performance.now(), sequential=await run(['--baseline',letters]), t1=performance.now();
   const parallel=await distributed(letters,2), t2=performance.now();
   if(JSON.stringify(sequential)!==JSON.stringify(parallel))throw Error('Parallel result differs for '+letters+': '+JSON.stringify({sequential,parallel}));
