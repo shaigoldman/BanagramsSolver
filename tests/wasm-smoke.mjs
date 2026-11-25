@@ -3,9 +3,10 @@ import { WASI, File, OpenFile, ConsoleStdout, PreopenDirectory } from '../web/no
 const bytes=await readFile('web/public/solver.wasm');
 const words=await readFile('words.txt');
 const module=await WebAssembly.compile(bytes);
-async function solve(letters, baseline = false) {
+async function solve(letters, baseline = false, config = null) {
   let output=''; const progress=[];
-  const wasi=new WASI(baseline ? ['solver','--baseline',letters] : ['solver',letters],[],[new OpenFile(new File([])),ConsoleStdout.lineBuffered(s=>{output+=s}),ConsoleStdout.lineBuffered(s=>{if(s.startsWith('PROGRESS '))progress.push(s);else console.error(s)}),new PreopenDirectory('.', new Map([['words.txt',new File(words)]]))]);
+  const args = config ? ['solver','--tuned',String(config.length),String(config.rounds),String(config.beam),JSON.stringify(config.weights),letters] : baseline ? ['solver','--baseline',letters] : ['solver',letters];
+  const wasi=new WASI(args,[],[new OpenFile(new File([])),ConsoleStdout.lineBuffered(s=>{output+=s}),ConsoleStdout.lineBuffered(s=>{if(s.startsWith('PROGRESS '))progress.push(s);else console.error(s)}),new PreopenDirectory('.', new Map([['words.txt',new File(words)]]))]);
   const instance=await WebAssembly.instantiate(module, {wasi_snapshot_preview1:wasi.wasiImport});
   const exit=wasi.start(instance);
   if(exit!==0)throw Error(`WASM exit ${exit}`);
@@ -43,14 +44,55 @@ function validate(letters, result) {
   }
   if (visited.size !== points.size) throw Error('Disconnected board: ' + letters);
 }
-const hands = ['dadadadadadadadad','obqsyerepvkfieujn','ansziavrgtembnaal','fdilsnookasqtesei','rshanuceexrgnstla','afcneivolrrciiors','tbayefitlneariign','aaaatuyeamgloondt','pehwnrzqrtutnaeoa','briuspnhnantaeyej','tmdqubeantoodoogk'];
-console.log('BENCHMARK mode,hand,status,rounds,seconds,rows');
-for (let i=0; i<hands.length; i++) {
-  for (const baseline of i%2 ? [false,true] : [true,false]) {
-    const start = performance.now();
-    const {result,progress} = await solve(hands[i],baseline);
-    const seconds = (performance.now()-start)/1000;
-    validate(hands[i],result);
-    console.log('BENCHMARK',baseline?'baseline':'mixed',hands[i],result.status,progress.length,seconds.toFixed(3),JSON.stringify(result.rows ?? []));
-  }
+
+const baseWeights=[6833,13508,12218,10747,2298,12772,12985,8906,8034,14847,14228,10975,12594,8251,7493,13071,14905,9013,8673,5944,12242,14022,12640,14850,13026,14926];
+const standard={length:15000,rounds:20,beam:20,weights:baseWeights};
+const rareWeights=baseWeights.map((v,i)=>v+([9,16,23,25].includes(i)?8000:0));
+const configs=[
+  {name:'mixed',...standard},
+  {name:'shorter',...standard,length:7500},
+  {name:'rare',...standard,weights:rareWeights},
+  {name:'wide',...standard,beam:35},
+  {name:'longer_search',...standard,rounds:30}
+];
+const defaultCheck=(await solve('stonecats')).result;
+const tunedCheck=(await solve('stonecats',false,standard)).result;
+if(JSON.stringify(defaultCheck)!==JSON.stringify(tunedCheck)) throw Error('Default tuned configuration differs from mixed solver');
+const train=['tsadmnimeroiyexrq','oohudieorjwojarma','ftogeiotrssdswaua','whxzdrluetrnrekmi','foiueioyvplasesos','yslearavneesidela','batazbejgvhwecusk','nkbaowxnaysolcidq','teendtugaamxateyy','rditgtmyizeptlgxo'];
+const heldout=['einleiwlsreniriia','onterebdsaatfetcm','trsefedeytgaudoxu','eqtzrsotaeggnsdee','amatnfixkrnrhmanr','doaelxvutoepagbvi','gltededtvxvbxolvo','oteuzosesafrevbax','yuaeoxnsotoksnedw','euuvoniakuiusdtia'];
+function boardStats(result) {
+ if(result.status!=='solved')return null;
+ const rows=result.rows,width=Math.max(...rows.map(r=>r.length));
+ const lines=[...rows,...Array.from({length:width},(_,x)=>rows.map(r=>r[x]??' ').join(''))];
+ const lengths=lines.flatMap(line=>line.split(/\s+/).filter(w=>w.length>1).map(w=>w.length));
+ return {longest:Math.max(...lengths),meanLength:lengths.reduce((a,b)=>a+b,0)/lengths.length};
 }
+const records=[];
+async function run(split,name,hand,config,baseline=false) {
+ const t=performance.now(), {result,progress}=await solve(hand,baseline,config);
+ const seconds=(performance.now()-t)/1000; validate(hand,result);
+ const row={split,name,hand,status:result.status,rounds:progress.length,seconds,...(boardStats(result)??{})};
+ records.push(row);console.log('TUNING',JSON.stringify(row));
+}
+for(let i=0;i<train.length;i++){
+ // Rotate the order to spread timing drift across configurations.
+ const candidates=[null,...configs];
+ for(let j=0;j<candidates.length;j++){
+  const c=candidates[(j+i)%candidates.length];
+  await run('train',c?.name??'baseline',train[i],c,!c);
+ }
+}
+function summary(name,split) {
+ const rs=records.filter(r=>r.name===name&&r.split===split), success=rs.filter(r=>r.status==='solved');
+ return {name,split,solved:success.length,total:rs.length,meanLongest:success.length?success.reduce((s,r)=>s+r.longest,0)/success.length:0,meanWordLength:success.length?success.reduce((s,r)=>s+r.meanLength,0)/success.length:0,meanSeconds:rs.reduce((s,r)=>s+r.seconds,0)/rs.length};
+}
+const trainResults=configs.map(c=>summary(c.name,'train'));
+trainResults.sort((a,b)=>b.solved-a.solved || b.meanLongest-a.meanLongest || a.meanSeconds-b.meanSeconds);
+const winner=configs.find(c=>c.name===trainResults[0].name);
+console.log('TRAIN_SELECTION',JSON.stringify({rule:'highest solve count, then mean longest word, then mean time',summaries:trainResults,winner:winner.name}));
+for(let i=0;i<heldout.length;i++){
+ const cs=[null,configs[0],...(winner.name==='mixed'?[]:[winner])];
+ for(let j=0;j<cs.length;j++){const c=cs[(j+i)%cs.length];await run('holdout',c?.name??'baseline',heldout[i],c,!c)}
+}
+console.log('HELDOUT_SUMMARY',JSON.stringify(['baseline','mixed',...(winner.name==='mixed'?[]:[winner.name])].map(n=>summary(n,'holdout'))));
+for(const hand of ['dadadadadadadadad','obqsyerepvkfieujn']) await run('diagnostic',winner.name,hand,winner);
