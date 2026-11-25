@@ -5,7 +5,7 @@ build-type: Simple
 executable banana-wasm
   main-is: Main.hs
   hs-source-dirs: wasm, src
-  other-modules: BananaBoard, Bfs, FallbackSearch, Hand, MixedSearch, Types, WordChooser
+  other-modules: BananaBoard, Bfs, FallbackSearch, Hand, MixedSearch, ParallelWasm, Types, WordChooser
   default-language: Haskell2010
   ghc-options: -O2
   build-depends: base >=4.14 && <5, containers, deepseq, matrix, parallel, unordered-containers

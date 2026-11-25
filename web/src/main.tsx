@@ -26,7 +26,7 @@ function App(){
  <div className="eyebrow"><span className="dot"/> THE STORY BEHIND THE SOLVER</div>
  <h1>About <em>Banana Board.</em></h1>
  <section className="panel about-panel" aria-label="About Banana Board">
- <h2>A project with a history</h2>
+ <h2>The original project</h2>
  <p>The original Haskell solver was designed and developed by Shai Goldman and Aaron Priven as their final project for Columbia University’s Parallel Functional Programming course in 2022.</p>
  <p><a href="https://www.cs.columbia.edu/~sedwards/classes/2022/4995-fall/reports/BananaSolve-report.pdf">Read the original paper (PDF)</a> <span aria-hidden="true">·</span> <a href="https://github.com/shaigoldman/BanagramsSolver">View the source on GitHub</a></p>
  <h2>How the solver works</h2>

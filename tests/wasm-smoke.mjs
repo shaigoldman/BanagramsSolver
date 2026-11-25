@@ -67,3 +67,5 @@ const impossible = await solve('fdilsnookasqtesei');
 if (impossible.result.status !== 'not_found') throw Error('Expected blocked Q hand to fail');
 if (impossible.progress.some(line => /^PROGRESS fallback /.test(line))) throw Error('Unusable-letter check did not skip fallback');
 console.log('Fallback regression checks passed');
+
+await import('./wasm-parallel-beam.mjs');
