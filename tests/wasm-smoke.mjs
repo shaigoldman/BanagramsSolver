@@ -45,63 +45,43 @@ function validate(letters, result) {
   if (visited.size !== points.size) throw Error('Disconnected board: ' + letters);
 }
 
+
 const baseWeights=[6833,13508,12218,10747,2298,12772,12985,8906,8034,14847,14228,10975,12594,8251,7493,13071,14905,9013,8673,5944,12242,14022,12640,14850,13026,14926];
-const standard={length:15000,rounds:20,beam:20,weights:baseWeights};
-const rareWeights=baseWeights.map((v,i)=>v+([9,16,23,25].includes(i)?8000:0));
-// Shared class weights: vowels are the zero anchor because adding the
-// same constant to every letter is equivalent to changing length weight.
-const alphabet='abcdefghijklmnopqrstuvwxyz';
-const groupWeights=(common,other,rare)=>[...alphabet].map(c=>
-  'aeiou'.includes(c)?0:'lnrst'.includes(c)?common:'jkqxz'.includes(c)?rare:other);
-let seed=20261127;
-function randomInt(n){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return Math.floor(seed / 4294967296 * n)}
-const classCandidates=Array.from({length:8},(_,i)=>({
-  name:'class_'+(i+1),
-  length:10000+randomInt(4)*5000,
-  rounds:[15,20,30][randomInt(3)],
-  beam:[15,20,35][randomInt(3)],
-  weights:groupWeights(randomInt(4)*2000,4000+randomInt(5)*2000,8000+randomInt(7)*2000)
-}));
-const configs=[{name:'mixed',...standard},...classCandidates];
-console.log('TUNING_CONFIGS',JSON.stringify(configs));
-const defaultCheck=(await solve('stonecats')).result;
-const tunedCheck=(await solve('stonecats',false,standard)).result;
-if(JSON.stringify(defaultCheck)!==JSON.stringify(tunedCheck)) throw Error('Default tuned configuration differs from mixed solver');
-const train=['tsadmnimeroiyexrq','oohudieorjwojarma','ftogeiotrssdswaua','whxzdrluetrnrekmi','foiueioyvplasesos','yslearavneesidela','batazbejgvhwecusk','nkbaowxnaysolcidq','teendtugaamxateyy','rditgtmyizeptlgxo'];
-const heldout=['ajnxeelqikdetahau','eabsvyltawiufpier','uetilwekdndtfdcaa','milnsiiadnetwvtfr','ijenaldgbzikrmbtl','keqqmcxtareenoest','sywsnpeaugvliiutd','devctelleiosxznnz','vsaguweiieaeeedyc','ttenloeaebasarlrs'];
-function boardStats(result) {
- if(result.status!=='solved')return null;
+const wide={length:15000,rounds:20,beam:35,weights:baseWeights};
+const bag=Object.entries({a:13,b:3,c:3,d:6,e:18,f:3,g:4,h:3,i:12,j:2,k:2,l:5,m:3,n:8,o:11,p:3,q:2,r:9,s:6,t:9,u:6,v:3,w:3,x:2,y:3,z:2}).flatMap(([c,n])=>Array(n).fill(c));
+let seed=20261128;
+function random(n){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return Math.floor(seed/4294967296*n)}
+function hand(n){const tiles=bag.slice();let s='';for(let i=0;i<n;i++)s+=tiles.splice(random(tiles.length),1)[0];return s}
+const cases=[12,17,21].flatMap(n=>Array.from({length:5},()=>({kind:'random',letters:hand(n)})));
+cases.push({kind:'diagnostic',letters:'dadadadadadadadad'},{kind:'diagnostic',letters:'obqsyerepvkfieujn'},{kind:'diagnostic',letters:'fdilsnookasqtesei'});
+function boardStats(result){
+ if(result.status!=='solved')return {};
  const rows=result.rows,width=Math.max(...rows.map(r=>r.length));
  const lines=[...rows,...Array.from({length:width},(_,x)=>rows.map(r=>r[x]??' ').join(''))];
  const lengths=lines.flatMap(line=>line.split(/\s+/).filter(w=>w.length>1).map(w=>w.length));
  return {longest:Math.max(...lengths),meanLength:lengths.reduce((a,b)=>a+b,0)/lengths.length};
 }
-const records=[];
-async function run(split,name,hand,config,baseline=false) {
- const t=performance.now(), {result,progress}=await solve(hand,baseline,config);
- const seconds=(performance.now()-t)/1000; validate(hand,result);
- const row={split,name,hand,status:result.status,rounds:progress.length,seconds,...(boardStats(result)??{})};
- records.push(row);console.log('TUNING',JSON.stringify(row));
+async function run(letters,mode){
+ const start=performance.now();
+ const first=await solve(letters,true);let result=first.result,rounds=first.progress.length,usedFallback=false;
+ if(mode==='fallback' && result.status==='not_found'){
+  usedFallback=true;const next=await solve(letters,false,wide);result=next.result;rounds+=next.progress.length;
+ }
+ validate(letters,result);
+ return {mode,status:result.status,seconds:(performance.now()-start)/1000,rounds,usedFallback,...boardStats(result)};
 }
-for(let i=0;i<train.length;i++){
- // Rotate the order to spread timing drift across configurations.
- const candidates=[null,...configs];
- for(let j=0;j<candidates.length;j++){
-  const c=candidates[(j+i)%candidates.length];
-  await run('train',c?.name??'baseline',train[i],c,!c);
+console.log('BENCH_CASES',JSON.stringify(cases));
+const records=[];
+for(let i=0;i<cases.length;i++){
+ for(let rep=0;rep<2;rep++){
+  const modes=(i+rep)%2?['fallback','baseline']:['baseline','fallback'];
+  for(const mode of modes){
+   const row={...cases[i],rep,...await run(cases[i].letters,mode)};
+   records.push(row);console.log('FALLBACK_RESULT',JSON.stringify(row));
+  }
  }
 }
-function summary(name,split) {
- const rs=records.filter(r=>r.name===name&&r.split===split), success=rs.filter(r=>r.status==='solved');
- return {name,split,solved:success.length,total:rs.length,meanLongest:success.length?success.reduce((s,r)=>s+r.longest,0)/success.length:0,meanWordLength:success.length?success.reduce((s,r)=>s+r.meanLength,0)/success.length:0,meanSeconds:rs.reduce((s,r)=>s+r.seconds,0)/rs.length};
+for(const kind of ['random','diagnostic']) for(const mode of ['baseline','fallback']){
+ const rs=records.filter(r=>r.kind===kind&&r.mode===mode),ok=rs.filter(r=>r.status==='solved');
+ console.log('FALLBACK_SUMMARY',JSON.stringify({kind,mode,runs:rs.length,solved:ok.length,meanSeconds:rs.reduce((s,r)=>s+r.seconds,0)/rs.length,meanLongest:ok.reduce((s,r)=>s+r.longest,0)/ok.length,meanLength:ok.reduce((s,r)=>s+r.meanLength,0)/ok.length}));
 }
-const trainResults=configs.map(c=>summary(c.name,'train'));
-trainResults.sort((a,b)=>b.solved-a.solved || b.meanLongest-a.meanLongest || a.meanSeconds-b.meanSeconds);
-const winner=configs.find(c=>c.name===trainResults[0].name);
-console.log('TRAIN_SELECTION',JSON.stringify({rule:'highest solve count, then mean longest word, then mean time',summaries:trainResults,winner:winner.name}));
-for(let i=0;i<heldout.length;i++){
- const cs=[null,configs[0],...(winner.name==='mixed'?[]:[winner])];
- for(let j=0;j<cs.length;j++){const c=cs[(j+i)%cs.length];await run('holdout',c?.name??'baseline',heldout[i],c,!c)}
-}
-console.log('HELDOUT_SUMMARY',JSON.stringify(['baseline','mixed',...(winner.name==='mixed'?[]:[winner.name])].map(n=>summary(n,'holdout'))));
-for(const hand of ['dadadadadadadadad','obqsyerepvkfieujn']) await run('diagnostic',winner.name,hand,winner);
