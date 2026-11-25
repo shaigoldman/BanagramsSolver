@@ -2,6 +2,9 @@ module Main (main) where
 import Bfs (bfsSeqProgress, bfsSeqMixedProgress, bfsSeqTunedProgress)
 import Types (Board(..), OMatrix(..), splitDict)
 import Data.Char (toLower)
+import Data.List (nub)
+import Hand (toHand)
+import WordChooser (buildWords)
 import Data.Matrix (toLists)
 import qualified Data.Set as Set
 import System.Environment (getArgs)
@@ -13,6 +16,7 @@ main = do
   args <- getArgs
   let parsed = case args of
         ["--baseline", input] -> Just (bfsSeqProgress, 20, 20, input)
+        ["--fallback", input] -> Just (fallbackProgress, 20, 20, input)
         ["--tuned", lengthArg, roundsArg, beamArg, weightsArg, input] -> do
           lengthWeight <- readMaybe lengthArg
           rounds <- readMaybe roundsArg
@@ -37,3 +41,16 @@ report :: Int -> Int -> IO ()
 report roundNumber total = do
   hPutStrLn stderr $ "PROGRESS " ++ show roundNumber ++ " " ++ show total
   hFlush stderr
+
+-- Run the existing search first. Only retry if every letter can occur in a
+-- multi-letter word constructible from the entire hand. For a connected board
+-- with multiple tiles this is a necessary, not sufficient, condition.
+fallbackProgress report input lim width dict@(_, dictlist) = do
+  first <- bfsSeqProgress report input lim width dict
+  case first of
+    Just solved -> pure (Just solved)
+    Nothing ->
+      let playable = concatMap fst $ buildWords (toHand input) (concat dictlist)
+          impossible = length input > 1 && any (`notElem` playable) (nub input)
+      in if impossible then pure Nothing
+         else bfsSeqMixedProgress report input lim 35 dict
